@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
+import '../widgets/luxury.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
@@ -59,63 +60,90 @@ class _ToneCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Hero(
-            tag: 'tone-${f.hz}',
+          // The tone, set like a stone in a ring of its own metal.
+          Container(
+            width: 62,
+            height: 62,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: foilFor(f.color),
+              boxShadow: [BoxShadow(color: f.color.withValues(alpha: 0.3), blurRadius: 16)],
+            ),
             child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  center: const Alignment(-0.3, -0.35),
-                  colors: [Colors.white.withValues(alpha: 0.9), f.glow, f.color],
-                  stops: const [0, 0.3, 1],
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF0B0A0E)),
+              child: Hero(
+                tag: 'tone-${f.hz}',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.3, -0.35),
+                      colors: [Colors.white.withValues(alpha: 0.9), f.glow, f.color],
+                      stops: const [0, 0.3, 1],
+                    ),
+                  ),
                 ),
-                boxShadow: [BoxShadow(color: f.color.withValues(alpha: 0.6), blurRadius: 18)],
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                FoilText(
                   '${f.hz} Hz',
+                  accent: f.color,
                   style: const TextStyle(
                     fontFamily: 'CormorantGaramond',
                     fontWeight: FontWeight.w600,
-                    fontSize: 26,
+                    fontSize: 25,
                     height: 1,
-                    color: Colors.white,
-                    shadows: textOnArt,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${f.name} · ${f.description}',
+                  f.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.82),
-                    shadows: textOnArt,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppTheme.ivory,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
-                  '${f.chakra.toUpperCase()} CHAKRA',
+                  f.description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: capsStyle(color: f.glow, size: 9),
+                  style: mutedStyle.copyWith(fontSize: 11),
                 ),
               ],
             ),
           ),
-          Icon(Icons.play_circle_fill_rounded, color: Colors.white.withValues(alpha: 0.92), size: 34),
+          const SizedBox(width: 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: f.color.withValues(alpha: 0.1),
+                  border: Border.all(color: f.color.withValues(alpha: 0.6), width: 0.8),
+                ),
+                child: Icon(Icons.play_arrow_rounded, color: f.glow, size: 20),
+              ),
+              const SizedBox(height: 6),
+              Text(f.chakra.split(' ').first.toUpperCase(), style: capsStyle(color: AppTheme.textMuted, size: 8)),
+            ],
+          ),
         ],
       ),
     );

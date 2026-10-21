@@ -5,11 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../theme/card_styles.dart';
-import 'gloss.dart';
 import 'scene_art.dart';
 
-/// The body every card shares: gradient ground, painted art, a legibility
-/// scrim, the content, and a glass finish on top.
+/// The body every card shares — the private-collection look of the
+/// money cards, applied everywhere:
+///
+/// * the default is an **onyx card**: near-black ground faintly tinted by
+///   the card's accent metal, a soft accent glow, fine engraving, a
+///   polished top sheen and a metallic hairline on continuous corners;
+/// * with [art] it is an **art face** — the card's photograph or painted
+///   scene, full-bleed (medallions, the player jewel, the lake).
 ///
 /// It is also the [Hero] child on both ends of a card flight, which lets
 /// [cardFlightShuttle] morph one card into another.
@@ -18,9 +23,9 @@ class CardFace extends StatelessWidget {
     super.key,
     required this.style,
     this.child,
-    this.borderRadius = 26,
+    this.borderRadius = 24,
     this.padding = const EdgeInsets.all(18),
-    this.sheen,
+    this.art = false,
     this.scrim = 1,
     this.elevation = 1,
     this.contentAlignment = Alignment.bottomLeft,
@@ -31,32 +36,104 @@ class CardFace extends StatelessWidget {
   final double borderRadius;
   final EdgeInsetsGeometry padding;
 
-  /// 0→1 drives one gloss sweep across the card; null keeps it still.
-  final Animation<double>? sheen;
+  /// Show the style's photo/scene full-bleed instead of the onyx card.
+  final bool art;
 
-  /// Strength of the bottom scrim that keeps type readable (0 = none).
+  /// Strength of the bottom fade that keeps type readable on art (0 = none).
   final double scrim;
   final double elevation;
 
   /// Where content stays anchored while the card morphs in flight.
   final Alignment contentAlignment;
 
+  static List<BoxShadow> _shadows(double elevation) => elevation <= 0
+      ? const []
+      : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5 * elevation),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+            spreadRadius: -6,
+          ),
+        ];
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => art ? _artFace() : _onyxFace();
+
+  Widget _onyxFace() {
+    final radius = BorderRadius.circular(borderRadius);
+    final accent = style.glow;
+    final engraving = switch (style.scene) {
+      Scene.gold => Scene.gold,
+      Scene.none => null,
+      _ => Scene.engraved,
+    };
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        shape: RoundedSuperellipseBorder(borderRadius: radius),
+        shadows: _shadows(elevation),
+      ),
+      child: ClipRSuperellipse(
+        borderRadius: radius,
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
+                    colors: [
+                      const Color(0xFF09090C),
+                      Color.lerp(const Color(0xFF0E0D12), accent, 0.05)!,
+                      Color.lerp(const Color(0xFF16141B), accent, 0.13)!,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0.85, -0.95),
+                    radius: 1.1,
+                    colors: [accent.withValues(alpha: 0.2), accent.withValues(alpha: 0)],
+                  ),
+                ),
+              ),
+            ),
+            if (engraving != null) Positioned.fill(child: SceneArt(scene: engraving, accent: accent)),
+            // Polished top: the faintest sheen, as on a lacquered card.
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x0FFFFFFF), Color(0x00FFFFFF)],
+                    stops: [0, 0.4],
+                  ),
+                ),
+              ),
+            ),
+            Padding(padding: padding, child: child ?? const SizedBox.shrink()),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _HairlinePainter(radius: borderRadius, accent: accent)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _artFace() {
     final radius = BorderRadius.circular(borderRadius);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        boxShadow: elevation <= 0
-            ? null
-            : [
-                BoxShadow(
-                  color: style.glow.withValues(alpha: 0.26 * elevation),
-                  blurRadius: 26,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-      ),
+      decoration: BoxDecoration(borderRadius: radius, boxShadow: _shadows(elevation)),
       child: ClipRRect(
         borderRadius: radius,
         child: Stack(
@@ -77,55 +154,66 @@ class CardFace extends StatelessWidget {
               Positioned.fill(child: CardPhoto(style: style))
             else if (style.scene != Scene.none)
               Positioned.fill(child: SceneArt(scene: style.scene, accent: style.glow)),
-            if (scrim > 0)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(gradient: _scrim(style.hasArt, scrim)),
-                ),
-              ),
+            if (scrim > 0) Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(gradient: _scrim(scrim)))),
             Padding(padding: padding, child: child ?? const SizedBox.shrink()),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: sheen == null
-                    ? CustomPaint(painter: GlossPainter(borderRadius: borderRadius))
-                    : AnimatedBuilder(
-                        animation: sheen!,
-                        builder: (context, _) => CustomPaint(
-                          // Enters and exits fully off-card (hidden at rest).
-                          painter: GlossPainter(
-                            borderRadius: borderRadius,
-                            sheen: Curves.easeInOut.transform(sheen!.value) * 1.5 - 0.25,
-                          ),
-                        ),
-                      ),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  /// Art gets a deeper scrim than plain colour cards; both fade out
-  /// before the upper half so the artwork stays vivid.
-  static LinearGradient _scrim(bool art, double strength) {
-    final a = (art ? 0.66 : 0.3) * strength;
+  /// An eased fade (no banding, no hard edge) that keeps type legible on
+  /// art and is gone by the upper third.
+  static LinearGradient _scrim(double strength) {
+    final a = 0.72 * strength;
     return LinearGradient(
       begin: Alignment.bottomCenter,
       end: Alignment.topCenter,
       colors: [
-        Colors.black.withValues(alpha: a),
-        Colors.black.withValues(alpha: a * 0.35),
-        Colors.black.withValues(alpha: 0),
+        for (final f in const [1.0, 0.74, 0.48, 0.26, 0.1, 0.0]) Colors.black.withValues(alpha: a * f),
       ],
-      stops: const [0, 0.45, 0.8],
+      stops: const [0, 0.14, 0.28, 0.42, 0.56, 0.72],
     );
   }
 }
 
-/// A card's photograph: a slow Ken Burns drift keeps it alive, and a
-/// grade toward the card's palette makes every photo feel part of one
-/// art direction. Falls back to the painted scene if it can't load.
+/// A metallic hairline: brightest where the light falls (top left),
+/// fading around the card, catching again at the far corner.
+class _HairlinePainter extends CustomPainter {
+  const _HairlinePainter({required this.radius, required this.accent});
+
+  final double radius;
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final rect = (Offset.zero & size).deflate(0.45);
+    canvas.drawRSuperellipse(
+      RSuperellipse.fromRectAndRadius(rect, Radius.circular(radius)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(accent, Colors.white, 0.45)!.withValues(alpha: 0.6),
+            accent.withValues(alpha: 0.12),
+            accent.withValues(alpha: 0.32),
+          ],
+          stops: const [0, 0.55, 1],
+        ).createShader(Offset.zero & size),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_HairlinePainter old) => old.radius != radius || old.accent != accent;
+}
+
+/// A card's photograph: a slow Ken Burns drift keeps it alive, with only a
+/// light tint toward the card's palette. Falls back to the painted scene
+/// if it can't load.
 class CardPhoto extends StatefulWidget {
   const CardPhoto({super.key, required this.style});
 
@@ -191,12 +279,8 @@ class _CardPhotoState extends State<CardPhoto> with SingleTickerProviderStateMix
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.bottomLeft,
-              end: Alignment.topRight,
-              colors: [
-                style.colors.first.withValues(alpha: 0.55),
-                style.colors[1].withValues(alpha: 0.28),
-                style.colors.last.withValues(alpha: 0.12),
-              ],
+              end: Alignment.center,
+              colors: [style.colors.first.withValues(alpha: 0.3), style.colors.first.withValues(alpha: 0)],
             ),
           ),
         ),
@@ -238,7 +322,7 @@ Widget cardFlightShuttle(
   }
   final lowerSize = _laidOutSize(lowerContext);
   final upperSize = _laidOutSize(upperContext);
-  final sameStyle = lower.style == upper.style;
+  final same = lower.style == upper.style && lower.art == upper.art;
 
   // Hero flights live in the overlay, outside any Material; give text a
   // proper ancestor so it never picks up the debug underline style.
@@ -260,9 +344,10 @@ Widget cardFlightShuttle(
             _ghost(upper, upperSize, upperOpacity),
           ],
         );
-        if (sameStyle) {
+        if (same) {
           return CardFace(
             style: upper.style,
+            art: upper.art,
             borderRadius: radius,
             padding: EdgeInsets.zero,
             scrim: scrim,
@@ -277,6 +362,7 @@ Widget cardFlightShuttle(
           children: [
             CardFace(
               style: lower.style,
+              art: lower.art,
               borderRadius: radius,
               padding: EdgeInsets.zero,
               scrim: scrim,
@@ -286,6 +372,7 @@ Widget cardFlightShuttle(
               opacity: Curves.easeInOut.transform(t),
               child: CardFace(
                 style: upper.style,
+                art: upper.art,
                 borderRadius: radius,
                 padding: EdgeInsets.zero,
                 scrim: scrim,

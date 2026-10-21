@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -6,6 +8,7 @@ import 'ambient_background.dart';
 import 'card_face.dart';
 import 'deck.dart';
 import 'glass_button.dart';
+import 'medallion.dart';
 
 /// The card a hub card morphs into: same style and artwork, larger, with
 /// the screen's title. Kept out of the deck so the hero lands cleanly.
@@ -33,6 +36,7 @@ class FeatureHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final metal = Color.lerp(style.glow, Colors.white, 0.35)!;
     return SizedBox(
       width: double.infinity,
       height: height,
@@ -40,46 +44,48 @@ class FeatureHeader extends StatelessWidget {
         tag: heroTag,
         face: CardFace(
           style: style,
-          borderRadius: 30,
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+          borderRadius: 28,
+          padding: const EdgeInsets.fromLTRB(22, 20, 18, 20),
+          contentAlignment: Alignment.centerLeft,
           child: child ??
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+              Row(
                 children: [
-                  if (eyebrow != null) ...[
-                    Text(eyebrow!, maxLines: 1, style: capsStyle(color: style.muted, size: 10.5)),
-                    const SizedBox(height: 6),
-                  ],
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontFamily: 'CormorantGaramond',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 38,
-                        height: 1,
-                        color: style.foreground,
-                        shadows: textOnArt,
-                      ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (eyebrow != null) ...[
+                          Text(eyebrow!, maxLines: 1, style: capsStyle(color: metal, size: 10)),
+                          const SizedBox(height: 8),
+                        ],
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontFamily: 'CormorantGaramond',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 36,
+                              height: 1,
+                              color: AppTheme.ivory,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: mutedStyle.copyWith(fontSize: 12.5, height: 1.3, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: style.muted,
-                      shadows: textOnArt,
-                    ),
-                  ),
+                  const SizedBox(width: 12),
+                  Medallion(style: style, size: math.min(96, height - 44)),
                 ],
               ),
         ),
@@ -126,9 +132,9 @@ class FeatureScaffold extends StatelessWidget {
     );
     final colors = background ??
         [
-          Color.lerp(AppTheme.bgTop, accent, 0.16)!,
+          Color.lerp(AppTheme.bgTop, accent, 0.1)!,
           AppTheme.bgTop,
-          const Color(0xFF0D0A24),
+          const Color(0xFF09080D),
         ];
 
     return Scaffold(

@@ -8,6 +8,7 @@ import '../theme/card_styles.dart';
 import '../widgets/breath_visual.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
+import '../widgets/luxury.dart';
 import '../widgets/seamless_route.dart';
 import 'breath_session_screen.dart';
 
@@ -35,7 +36,7 @@ class BreathworkScreen extends ConsumerWidget {
       header: const FeatureHeader(
         heroTag: 'card-breath',
         style: CardStyles.breath,
-        eyebrow: '5 GUIDED RHYTHMS',
+        eyebrow: '6 GUIDED RHYTHMS',
         title: 'Breathwork',
         subtitle: 'Change your state in two minutes',
       ),
@@ -67,7 +68,7 @@ class _RecommendedCard extends StatelessWidget {
     return GlowCard(
       style: p.style,
       heroTag: tag,
-      height: 212,
+      height: 226,
       borderRadius: 28,
       semanticLabel: 'Recommended: ${p.name}',
       padding: const EdgeInsets.fromLTRB(20, 18, 14, 18),
@@ -91,8 +92,7 @@ class _RecommendedCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontSize: 30,
                       height: 1,
-                      color: Colors.white,
-                      shadows: textOnArt,
+                      color: AppTheme.ivory,
                     ),
                   ),
                 ),
@@ -101,41 +101,16 @@ class _RecommendedCard extends StatelessWidget {
                   p.benefit,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.5,
-                    color: Colors.white.withValues(alpha: 0.82),
-                  ),
+                  style: mutedStyle.copyWith(fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
                 PhaseStrip(phases: p.phases, color: p.color),
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(22),
-                        color: Colors.white,
-                        boxShadow: [BoxShadow(color: p.color.withValues(alpha: 0.45), blurRadius: 18)],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.play_arrow_rounded, size: 18, color: Color.lerp(p.color, Colors.black, 0.6)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Start',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13.5,
-                              color: Color.lerp(p.color, Colors.black, 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
+                    // The whole card is the button; the pill is its label.
+                    IgnorePointer(
+                      child: ActionPill(label: 'Start', icon: Icons.play_arrow_rounded, color: p.color, onTap: () {}),
                     ),
                     const SizedBox(width: 12),
                     Flexible(
@@ -194,7 +169,7 @@ class _PatternCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize: 25,
                     height: 1,
-                    color: Colors.white,
+                    color: AppTheme.ivory,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -202,12 +177,7 @@ class _PatternCard extends StatelessWidget {
                   p.benefit,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.75),
-                  ),
+                  style: mutedStyle.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 PhaseStrip(phases: p.phases, color: p.color),

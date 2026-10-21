@@ -12,6 +12,10 @@
 
 # Task 7: Add money menifestation with it's custom player with money indications and money frequency
 
+# Task 8: Improve Breath Exercises and add Speaking exercies where interactive UI makes the user complete the speaking exercises
+
+# Task 9: Add videos where we can, use galaxy and stars theme videos
+
 Beautiful glossy design and beautiful transitions
 Add real images from free image websites for cards
 

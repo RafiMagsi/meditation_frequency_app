@@ -6,7 +6,7 @@ enum BreathMove { inhale, hold, exhale, rest }
 
 /// One phase of a breathing pattern.
 class BreathPhase {
-  const BreathPhase(this.move, this.seconds, this.cue, {this.label, this.to});
+  const BreathPhase(this.move, this.seconds, this.cue, {this.label, this.to, this.side, this.voice});
 
   final BreathMove move;
   final double seconds;
@@ -19,6 +19,20 @@ class BreathPhase {
 
   /// Lung fullness (0–1) at the end of the phase; holds keep the level.
   final double? to;
+
+  /// Nostril for alternate-nostril breathing ('left' / 'right').
+  final String? side;
+
+  /// What the voice guide says at the start of the phase.
+  final String? voice;
+
+  String get spoken =>
+      voice ??
+      switch (move) {
+        BreathMove.inhale => 'Breathe in',
+        BreathMove.exhale => 'Breathe out',
+        _ => 'Hold',
+      };
 
   String get title =>
       label ??
@@ -44,8 +58,12 @@ class BreathPattern {
     required this.rounds,
     required this.color,
     required this.bestFor,
+    required this.tone,
     this.shape = BreathShape.orb,
   });
+
+  /// Soft tone bed for the session (an asset path).
+  final String tone;
 
   final String id;
   final String name;
@@ -147,6 +165,38 @@ class VisualizeStep extends RitualStep {
 /// Write a doubt, then let it dissolve.
 class ReleaseStep extends RitualStep {
   const ReleaseStep({required super.title, required super.guidance});
+}
+
+enum VoiceKind { affirm, gratitude, om, hum }
+
+/// A speaking practice: the app listens and the user completes it by
+/// voice.
+class VoicePractice {
+  const VoicePractice({
+    required this.kind,
+    required this.name,
+    required this.benefit,
+    required this.how,
+    required this.color,
+    required this.minutes,
+    this.icon,
+    this.emblem,
+  });
+
+  final VoiceKind kind;
+  final String name;
+  final String benefit;
+
+  /// One-line instruction shown before starting.
+  final String how;
+  final Color color;
+  final int minutes;
+
+  /// The medallion's glyph: an icon or a short word.
+  final IconData? icon;
+  final String? emblem;
+
+  String get id => kind.name;
 }
 
 class Ritual {

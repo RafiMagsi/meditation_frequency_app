@@ -11,9 +11,9 @@ class AmbientBackground extends StatefulWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF0A0E27),
-      Color(0xFF150F33),
-      Color(0xFF1B1038),
+      Color(0xFF0D0B14),
+      Color(0xFF0A090F),
+      Color(0xFF100C18),
     ],
     this.accents = const [AppTheme.violet, AppTheme.pink],
     this.particleCount = 22,

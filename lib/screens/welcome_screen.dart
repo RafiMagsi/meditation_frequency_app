@@ -15,8 +15,7 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen>
-    with TickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin {
   late final AnimationController _intro = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
@@ -141,19 +140,15 @@ class _BeginButton extends StatelessWidget {
           child: GestureDetector(
             key: const Key('begin'),
             onTap: () => pushSeamless(context, const HomeScreen()),
+            // Champagne hairline over a faint gold wash, breathing softly.
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 17),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C6BF0), Color(0xFFC94F93)],
-                ),
+                color: AppTheme.goldMid.withValues(alpha: 0.12 + 0.04 * glow),
+                border: Border.all(color: AppTheme.goldMid.withValues(alpha: 0.7 + 0.25 * glow), width: 1),
                 boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.violet.withValues(alpha: 0.35 + 0.25 * glow),
-                    blurRadius: 28 + 14 * glow,
-                    offset: const Offset(0, 10),
-                  ),
+                  BoxShadow(color: AppTheme.goldMid.withValues(alpha: 0.12 + 0.16 * glow), blurRadius: 26 + 14 * glow),
                 ],
               ),
               child: const Row(
@@ -165,12 +160,12 @@ class _BeginButton extends StatelessWidget {
                       fontFamily: 'Quicksand',
                       fontWeight: FontWeight.w700,
                       fontSize: 17,
-                      color: Colors.white,
+                      color: AppTheme.ivory,
                       letterSpacing: 0.5,
                     ),
                   ),
                   SizedBox(width: 10),
-                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                  Icon(Icons.arrow_forward_rounded, color: AppTheme.champagne, size: 20),
                 ],
               ),
             ),

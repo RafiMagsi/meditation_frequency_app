@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -7,9 +5,9 @@ import '../theme/card_styles.dart';
 import 'card_face.dart';
 import 'deck.dart';
 
-/// A pressable card: it sinks on touch (iOS-like), a gloss sweep passes
-/// over it every few seconds, and — given a [heroTag] — it morphs
-/// seamlessly into the next screen while the rest of the deck slides away.
+/// A pressable card: it sinks on touch (iOS-like) and — given a
+/// [heroTag] — morphs seamlessly into the next screen while the rest of
+/// the deck slides away.
 class GlowCard extends StatefulWidget {
   const GlowCard({
     super.key,
@@ -18,9 +16,8 @@ class GlowCard extends StatefulWidget {
     required this.child,
     this.heroTag,
     this.height,
-    this.borderRadius = 26,
+    this.borderRadius = 24,
     this.padding = const EdgeInsets.all(18),
-    this.sheenEnabled = true,
     this.contentAlignment = Alignment.bottomLeft,
     this.semanticLabel,
   });
@@ -32,7 +29,6 @@ class GlowCard extends StatefulWidget {
   final double? height;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
-  final bool sheenEnabled;
   final Alignment contentAlignment;
   final String? semanticLabel;
 
@@ -40,40 +36,16 @@ class GlowCard extends StatefulWidget {
   State<GlowCard> createState() => _GlowCardState();
 }
 
-class _GlowCardState extends State<GlowCard> with TickerProviderStateMixin {
+class _GlowCardState extends State<GlowCard> with SingleTickerProviderStateMixin {
   late final AnimationController _press = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 110),
     reverseDuration: const Duration(milliseconds: 280),
   );
 
-  /// One gloss sweep. It only runs during a sweep (every ~7 s, offset per
-  /// card so the deck doesn't flash in unison), so idle cards cost nothing.
-  late final AnimationController _sheen = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1300),
-  );
-  Timer? _sheenTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.sheenEnabled) {
-      final offset = 1200 + ((widget.heroTag ?? widget.semanticLabel).hashCode % 4000);
-      _sheenTimer = Timer(Duration(milliseconds: offset), () {
-        _sweep();
-        _sheenTimer = Timer.periodic(const Duration(seconds: 7), (_) => _sweep());
-      });
-    }
-  }
-
-  void _sweep() => _sheen.forward(from: 0);
-
   @override
   void dispose() {
-    _sheenTimer?.cancel();
     _press.dispose();
-    _sheen.dispose();
     super.dispose();
   }
 
@@ -91,7 +63,6 @@ class _GlowCardState extends State<GlowCard> with TickerProviderStateMixin {
       style: widget.style,
       borderRadius: widget.borderRadius,
       padding: widget.padding,
-      sheen: widget.sheenEnabled ? _sheen : null,
       contentAlignment: widget.contentAlignment,
       child: widget.child,
     );

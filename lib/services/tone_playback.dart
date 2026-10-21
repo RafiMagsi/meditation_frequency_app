@@ -9,9 +9,12 @@ import 'package:just_audio/just_audio.dart';
 /// unavailable on a platform it drives a simulated timeline, so the demo
 /// never breaks.
 class TonePlayback extends ChangeNotifier {
-  TonePlayback(this.audioPath);
+  TonePlayback(this.audioPath, {this.volume = 1});
 
   final String audioPath;
+
+  /// Peak volume after the fade-in (lower for a bed under a voice).
+  final double volume;
 
   /// Sleep-timer presets in minutes (0 = off).
   static const sleepOptions = [0, 15, 30, 60];
@@ -104,7 +107,7 @@ class TonePlayback extends ChangeNotifier {
     await player.setVolume(0);
     // play() completes only when playback stops, so don't await it.
     unawaited(player.play());
-    _ramp(from: 0, to: 1, ms: 2400);
+    _ramp(from: 0, to: volume, ms: 2400);
   }
 
   Future<void> pause() async {

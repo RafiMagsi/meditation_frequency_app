@@ -472,8 +472,7 @@ void _waves(_Brush b) {
 
 /// Decor: banknote guilloché in hairline gold (money cards).
 void _engraved(_Brush b) {
-  const gold = Color(0xFFD4AF6A);
-  b.glow(b.at(0.92, 0.15), b.m * 1.1, gold, 0.22);
+  final metal = b.accent;
   final p = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 0.6 * b.unit;
@@ -482,11 +481,13 @@ void _engraved(_Brush b) {
     for (var i = 0; i <= 90; i++) {
       final u = i / 90;
       final y = 0.5 +
-          0.3 * math.sin((u * 2.2 + k * 0.035 + b.t) * 2 * math.pi) * math.cos((u * 0.9 - k * 0.02) * 2 * math.pi);
+          0.3 *
+              math.sin((u * 2.2 + k * 0.035 + b.t) * 2 * math.pi) *
+              math.cos((u * 0.9 - k * 0.02) * 2 * math.pi);
       final pt = Offset(b.w * u, b.h * y);
       i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
     }
-    p.color = gold.withValues(alpha: k % 3 == 0 ? 0.2 : 0.1);
+    p.color = metal.withValues(alpha: k % 3 == 0 ? 0.13 : 0.065);
     b.c.drawPath(path, p);
   }
 }

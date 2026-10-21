@@ -178,6 +178,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with TickerProvider
           tag: widget.heroTag,
           face: CardFace(
             style: CardStyles.session(scene),
+            art: true,
             borderRadius: size / 2,
             padding: EdgeInsets.zero,
             scrim: 0,

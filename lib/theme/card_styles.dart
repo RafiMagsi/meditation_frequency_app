@@ -90,41 +90,41 @@ abstract final class CardStyles {
   );
   static const frequencies = CardStyle(
     colors: [Color(0xFF140E40), Color(0xFF2A1F7A), Color(0xFF6B54E0)],
-    glow: AppTheme.violet,
+    glow: Color(0xFF9B87F5),
     scene: Scene.cosmos,
     image: 'assets/images/cards/cosmos.jpg',
   );
   static const guided = CardStyle(
     colors: [Color(0xFF082224), Color(0xFF1C6B6E), Color(0xFF8FD8C2)],
-    glow: AppTheme.teal,
+    glow: Color(0xFF5FD3A6),
     scene: Scene.forest,
     image: 'assets/images/cards/forest.jpg',
   );
   static const mood = CardStyle(
     colors: [Color(0xFF14061C), Color(0xFF2E1240), Color(0xFF5A1F52)],
-    glow: AppTheme.pink,
+    glow: Color(0xFFE879B8),
     scene: Scene.aurora,
     image: 'assets/images/cards/aurora.jpg',
   );
   static const timer = CardStyle(
     colors: [Color(0xFF0B1530), Color(0xFF233A78), Color(0xFF7A8FD0)],
-    glow: AppTheme.sky,
+    glow: Color(0xFF6EA8F6),
     scene: Scene.ocean,
     image: 'assets/images/cards/ocean.jpg',
   );
   static const meter = CardStyle(
     colors: [Color(0xFF0E0B30), Color(0xFF2B2270), Color(0xFF151040)],
-    glow: AppTheme.violet,
+    glow: Color(0xFFC9D2E3),
     scene: Scene.mandala,
   );
   static const progress = CardStyle(
     colors: [Color(0xFF3A2808), Color(0xFF6E5216), Color(0xFFC99A45)],
-    glow: AppTheme.gold,
+    glow: Color(0xFFF0B46B),
     scene: Scene.chart,
   );
   static const playlists = CardStyle(
     colors: [Color(0xFF3A0F2A), Color(0xFF7A2F58), Color(0xFFD86FA8)],
-    glow: AppTheme.pink,
+    glow: Color(0xFFE8957A),
     scene: Scene.vinyl,
   );
 
@@ -187,6 +187,7 @@ abstract final class CardStyles {
           Color.lerp(color, const Color(0xFF05060F), 0.3)!,
         ],
         glow: color,
+        scene: Scene.engraved,
       );
 
   /// Onyx card with banknote-style engraving for money frequencies.
@@ -199,19 +200,19 @@ abstract final class CardStyles {
 
   static const ritualMorning = CardStyle(
     colors: [Color(0xFF2A1430), Color(0xFF9A4A5E), Color(0xFFF2B37A)],
-    glow: AppTheme.gold,
+    glow: Color(0xFFFFC38A),
     scene: Scene.dawn,
     image: 'assets/images/cards/ritual_morning.jpg',
   );
   static const ritualEvening = CardStyle(
     colors: [Color(0xFF070B1E), Color(0xFF1A2456), Color(0xFF4B3C8C)],
-    glow: AppTheme.violet,
+    glow: Color(0xFF8C8CF0),
     scene: Scene.night,
     image: 'assets/images/cards/ritual_evening.jpg',
   );
   static const breath = CardStyle(
     colors: [Color(0xFF062A30), Color(0xFF13606A), Color(0xFF7FD0C4)],
-    glow: AppTheme.teal,
+    glow: Color(0xFF7DD3FC),
     scene: Scene.breeze,
     image: 'assets/images/cards/breath.jpg',
   );
@@ -220,6 +221,12 @@ abstract final class CardStyles {
     glow: Color(0xFF9FD3E6),
     scene: Scene.lake,
     image: 'assets/images/cards/inner_lake.jpg',
+  );
+
+  static const voice = CardStyle(
+    colors: [Color(0xFF1E0F14), Color(0xFF5A2A34), Color(0xFFD99A8C)],
+    glow: Color(0xFFE8B4A0),
+    scene: Scene.waves,
   );
 
   /// Every photo, for precaching before the first flight.

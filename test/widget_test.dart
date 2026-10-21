@@ -1,10 +1,64 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:meditation_frequency_app/main.dart';
+import 'package:meditation_frequency_app/services/practice_store.dart';
 import 'package:meditation_frequency_app/services/tone_playback.dart';
+import 'package:meditation_frequency_app/services/voice.dart';
+
+/// Records what the voice guide would say.
+class FakeVoiceGuide implements VoiceGuide {
+  final said = <String>[];
+  @override
+  Future<void> say(String text) async => said.add(text);
+  @override
+  Future<void> stop() async {}
+}
+
+/// Speech the test "speaks" with [say].
+class FakeSpeech implements SpeechInput {
+  void Function(Heard heard)? _onHeard;
+  bool listening = false;
+  @override
+  Future<bool> init() async => true;
+  @override
+  Future<void> listen(
+      {required void Function(Heard heard) onHeard,
+      void Function(double level)? onLevel,
+      void Function()? onDone}) async {
+    _onHeard = onHeard;
+    listening = true;
+  }
+
+  @override
+  Future<void> stop() async => listening = false;
+
+  void say(String words, {bool done = false}) => _onHeard?.call((words: words, done: done));
+}
+
+/// A microphone whose loudness the test sets.
+class FakeMic implements MicLevel {
+  final _levels = StreamController<double>.broadcast(sync: true);
+  double level = 0.05;
+  @override
+  Future<bool> start() async => true;
+  @override
+  Stream<double> get levels => _levels.stream;
+  void push() => _levels.add(level);
+  @override
+  Future<void> stop() async {}
+  @override
+  void dispose() {}
+}
+
+late FakeVoiceGuide voice;
+late FakeSpeech speech;
+late FakeMic mic;
+late ProviderContainer container;
 
 // Ambient animations never settle, so pump fixed durations instead of
 // pumpAndSettle. One transition is ~820 ms.
@@ -17,7 +71,16 @@ Future<void> openHub(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1179, 2556); // iPhone 15
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(const ProviderScope(child: MeditationApp()));
+  voice = FakeVoiceGuide();
+  speech = FakeSpeech();
+  mic = FakeMic();
+  container = ProviderContainer(overrides: [
+    voiceGuideProvider.overrideWithValue(voice),
+    speechProvider.overrideWithValue(speech),
+    micLevelProvider.overrideWithValue(() => mic),
+  ]);
+  addTearDown(container.dispose);
+  await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MeditationApp()));
   expect(find.text('& Frequency'), findsOneWidget);
   await tester.tap(find.byKey(const Key('begin')));
   await settle(tester);
@@ -45,7 +108,7 @@ void main() {
     await settle(tester);
     expect(find.text('Solfeggio healing tones'), findsOneWidget);
     expect(find.text('528 Hz'), findsOneWidget);
-    expect(find.text('ROOT CHAKRA'), findsOneWidget);
+    expect(find.text('ROOT'), findsOneWidget); // chakra under the play button
 
     await tester.tap(find.byKey(const Key('back')));
     await settle(tester);
@@ -157,6 +220,7 @@ void main() {
     expect(find.text('Inhale'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('Breathe in slowly through the nose'), findsOneWidget);
+    expect(voice.said, containsAllInOrder(['Three', 'Two', 'One', 'Breathe in']));
 
     // Into the hold.
     await tester.pump(const Duration(seconds: 3));
@@ -213,6 +277,92 @@ void main() {
     await gesture.up();
     await settle(tester, 1500);
     expect(find.text('Let the mud settle.'), findsOneWidget);
+  });
+
+  Future<void> openVoice(WidgetTester tester, String practice) async {
+    await tester.scrollUntilVisible(find.text('Voice'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Voice'));
+    await settle(tester);
+    await tester.scrollUntilVisible(find.text(practice), 200, scrollable: find.byType(Scrollable).last);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text(practice));
+    await settle(tester);
+  }
+
+  testWidgets('Spoken affirmations only count once the words are heard', (tester) async {
+    await openHub(tester);
+    await openVoice(tester, 'Spoken Affirmations');
+    expect(find.text('TAP THE MICROPHONE AND SPEAK'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('mic')));
+    await tester.pump();
+    expect(find.text('LISTENING…'), findsOneWidget);
+
+    // Half the words is not enough…
+    speech.say('I am making 10,000');
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('AFFIRMED'), findsNothing);
+
+    // …saying it (nearly) all is.
+    speech.say('I am making 10,000 a month with app development');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('AFFIRMED · 1 OF 3'), findsOneWidget);
+
+    // It listens again by itself for the next repetition.
+    await tester.pump(const Duration(milliseconds: 1300));
+    expect(speech.listening, isTrue);
+    expect(find.text('LISTENING…'), findsOneWidget);
+  });
+
+  testWidgets('Gratitude aloud writes the spoken words into the journal', (tester) async {
+    await openHub(tester);
+    await openVoice(tester, 'Gratitude Aloud');
+
+    for (final words in ['the sunrise over the hills', 'my mother and her patience', 'how I keep showing up']) {
+      await tester.tap(find.byKey(const Key('mic')));
+      await tester.pump();
+      speech.say(words, done: true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1400));
+    }
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Beautifully done.'), findsOneWidget);
+    final journal = container.read(practiceProvider).journal.map((e) => e.text);
+    expect(journal, containsAll(['the sunrise over the hills', 'my mother and her patience', 'how I keep showing up']));
+  });
+
+  testWidgets('Om chant counts a round only after a sustained Aum', (tester) async {
+    await openHub(tester);
+    await openVoice(tester, 'Om Chant');
+    await tester.tap(find.byKey(const Key('begin-chant')));
+    await tester.pump();
+
+    Future<void> run(double seconds, double level) async {
+      mic.level = level;
+      for (var i = 0; i < (seconds * 10).round(); i++) {
+        mic.push();
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    await run(1.6, 0.08); // calibration: a quiet room
+    expect(find.text('Breathe in'), findsOneWidget);
+    await run(4.1, 0.08);
+    expect(find.text('Chant  Aum'), findsOneWidget);
+
+    // Too short: two seconds, then a pause.
+    await run(2, 0.6);
+    await run(2, 0.05);
+    expect(find.text('Almost'), findsOneWidget);
+
+    await run(2.5, 0.05); // back to the inhale
+    await run(4, 0.08);
+    await run(6.5, 0.6); // a full Aum
+    await run(2, 0.05);
+    expect(find.text('Rest'), findsOneWidget);
+    expect(find.text('ROUND 2 / 5'), findsOneWidget);
   });
 }
 

@@ -14,6 +14,7 @@ import '../widgets/ambient_background.dart';
 import '../widgets/card_face.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
+import '../widgets/luxury.dart';
 
 /// A guided daily ritual: one interactive card per step, dealt in from
 /// the right. Finishing saves the journal and extends the streak.
@@ -371,41 +372,12 @@ class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: enabled,
+    return ActionPill(
       label: label,
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: enabled ? LinearGradient(colors: [Color.lerp(glow, Colors.white, 0.25)!, glow]) : null,
-            color: enabled ? null : Colors.white.withValues(alpha: 0.08),
-            boxShadow: enabled
-                ? [BoxShadow(color: glow.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8))]
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14.5,
-                  color: enabled ? AppTheme.bgTop : AppTheme.textMuted,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Icon(Icons.arrow_forward_rounded, size: 18, color: enabled ? AppTheme.bgTop : AppTheme.textMuted),
-            ],
-          ),
-        ),
-      ),
+      icon: Icons.arrow_forward_rounded,
+      color: glow,
+      enabled: enabled,
+      onTap: onTap,
     );
   }
 }
@@ -1218,26 +1190,12 @@ class _CompletionCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Semantics(
-              button: true,
-              label: 'Done',
-              child: GestureDetector(
-                key: const Key('done'),
-                onTap: () => Navigator.of(context).maybePop(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(26), color: Colors.white),
-                  child: Text(
-                    'Carry it into the day',
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: ritual.style.colors.first,
-                    ),
-                  ),
-                ),
-              ),
+            ActionPill(
+              key: const Key('done'),
+              label: 'Carry it into the day',
+              icon: Icons.wb_sunny_outlined,
+              color: ritual.style.glow,
+              onTap: () => Navigator.of(context).maybePop(),
             ),
           ],
         ),

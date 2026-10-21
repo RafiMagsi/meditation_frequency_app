@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
+import '../widgets/luxury.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
@@ -129,16 +130,14 @@ class _MoodTile extends StatelessWidget {
                 begin: Alignment.bottomLeft,
                 end: Alignment.topRight,
                 colors: selected
-                    ? [Color.lerp(color, Colors.black, 0.55)!, Color.lerp(color, Colors.black, 0.15)!]
-                    : [const Color(0xFF14162C), const Color(0xFF1D2040)],
+                    ? [const Color(0xFF0E0D12), Color.lerp(const Color(0xFF16141B), color, 0.22)!]
+                    : const [Color(0xFF0E0D12), Color(0xFF15131A)],
               ),
               border: Border.all(
-                color: selected ? color.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.08),
-                width: selected ? 1.2 : 0.8,
+                color: selected ? color.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.08),
+                width: 0.9,
               ),
-              boxShadow: selected
-                  ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8))]
-                  : null,
+              boxShadow: selected ? [BoxShadow(color: color.withValues(alpha: 0.22), blurRadius: 18)] : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -151,7 +150,7 @@ class _MoodTile extends StatelessWidget {
                     fontFamily: 'Quicksand',
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
-                    color: selected ? Colors.white : AppTheme.textMuted,
+                    color: selected ? AppTheme.ivory : AppTheme.textMuted,
                   ),
                 ),
               ],
@@ -206,7 +205,8 @@ class _SuggestionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text('${mood.emoji}  FOR YOU', style: capsStyle(color: Colors.white.withValues(alpha: 0.85), size: 10.5)),
+              Text('${mood.emoji}  FOR YOU',
+                  style: capsStyle(color: Color.lerp(f.color, Colors.white, 0.35)!, size: 10)),
             ],
           ),
           const SizedBox(height: 14),
@@ -217,34 +217,13 @@ class _SuggestionCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: 25,
               height: 1.15,
-              color: Colors.white,
-              shadows: textOnArt,
+              color: AppTheme.ivory,
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              color: Colors.white.withValues(alpha: 0.16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
-                const SizedBox(width: 4),
-                Text(
-                  'Play ${f.hz} Hz',
-                  style: const TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
+          // The whole card is the button; the pill is its label.
+          IgnorePointer(
+            child: ActionPill(label: 'Play ${f.hz} Hz', icon: Icons.play_arrow_rounded, color: f.color, onTap: () {}),
           ),
         ],
       ),

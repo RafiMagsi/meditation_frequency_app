@@ -25,11 +25,14 @@ BreathSpot breathSpotAt(BreathPattern pattern, double cycleT) {
 }
 
 /// Short phase label for strips and rings: IN, HOLD, OUT, TOP UP.
-String phaseShortLabel(BreathPhase p) => switch (p.move) {
-      BreathMove.inhale => p.label == 'Top up' ? 'TOP UP' : 'IN',
-      BreathMove.exhale => 'OUT',
-      _ => 'HOLD',
-    };
+String phaseShortLabel(BreathPhase p) {
+  final base = switch (p.move) {
+    BreathMove.inhale => p.label == 'Top up' ? 'TOP UP' : 'IN',
+    BreathMove.exhale => 'OUT',
+    _ => 'HOLD',
+  };
+  return p.side == null ? base : '$base ${p.side![0].toUpperCase()}';
+}
 
 String phaseSeconds(double s) => s == s.roundToDouble() ? '${s.round()}' : '$s';
 

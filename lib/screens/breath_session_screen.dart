@@ -7,12 +7,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/practice.dart';
 import '../services/practice_store.dart';
+import '../services/tone_playback.dart';
+import '../services/voice.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breath_visual.dart';
 import '../widgets/card_face.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
+import '../widgets/luxury.dart';
 
 /// An interactive breath guide. The shape breathes with you, each phase
 /// is named, counted down and felt as a haptic, the whole screen glows
@@ -45,6 +48,25 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
   int _lastPhase = -1;
   bool _done = false;
 
+  /// Spoken cues, for practising with eyes closed.
+  bool _voiceOn = true;
+
+  /// Optional soft tone bed under the breath.
+  TonePlayback? _bed;
+
+  // Resolved up front: `ref` can't be used from dispose().
+  late final VoiceGuide _voice;
+
+  @override
+  void initState() {
+    super.initState();
+    _voice = ref.read(voiceGuideProvider);
+  }
+
+  void _say(String text) {
+    if (_voiceOn) _voice.say(text);
+  }
+
   Duration get _length => Duration(milliseconds: (_p.cycleSeconds * _rounds * 1000).round());
   bool get _started => _session.isAnimating || _session.value > 0;
 
@@ -63,7 +85,9 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
     if (global != _lastPhase) {
       _lastPhase = global;
       if (_session.isAnimating && _session.value < 1) {
-        _p.phases[spot.phase].move == BreathMove.inhale ? HapticFeedback.mediumImpact() : HapticFeedback.lightImpact();
+        final phase = _p.phases[spot.phase];
+        phase.move == BreathMove.inhale ? HapticFeedback.mediumImpact() : HapticFeedback.lightImpact();
+        _say(phase.spoken);
       }
     }
   }
@@ -72,6 +96,8 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
     if (status == AnimationStatus.completed && !_done) {
       setState(() => _done = true);
       HapticFeedback.heavyImpact();
+      _say('Beautifully done.');
+      _bed?.pause();
       ref.read(practiceProvider.notifier).recordPractice('breath', seconds: _length.inSeconds);
     }
   }
@@ -91,6 +117,7 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
     // A three-beat count-in, so the first inhale isn't a surprise.
     HapticFeedback.selectionClick();
     setState(() => _count = 3);
+    _say('Three');
     _countIn = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_count == 1) {
         timer.cancel();
@@ -99,8 +126,23 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
       } else {
         HapticFeedback.selectionClick();
         setState(() => _count = _count! - 1);
+        _say(_count == 2 ? 'Two' : 'One');
       }
     });
+  }
+
+  void _toggleVoice() {
+    setState(() => _voiceOn = !_voiceOn);
+    if (!_voiceOn) _voice.stop();
+  }
+
+  void _toggleBed() {
+    if (_bed == null) {
+      setState(() => _bed = TonePlayback(_p.tone, volume: 0.35)..init().then((_) => _bed?.play()));
+    } else {
+      _bed!.dispose();
+      setState(() => _bed = null);
+    }
   }
 
   void _restart() {
@@ -124,6 +166,8 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
   @override
   void dispose() {
     _countIn?.cancel();
+    _bed?.dispose();
+    _voice.stop();
     _session.dispose();
     super.dispose();
   }
@@ -184,6 +228,26 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
                                     started ? 'ROUND ${spot.round + 1} OF $_rounds' : _p.rhythm,
                                     style: capsStyle(color: Colors.white.withValues(alpha: 0.85), size: 10.5),
                                   ),
+                                  const SizedBox(width: 12),
+                                  GlassIconButton(
+                                    key: const Key('voice'),
+                                    icon: _voiceOn ? Icons.record_voice_over_rounded : Icons.voice_over_off_rounded,
+                                    active: _voiceOn,
+                                    activeColor: Color.lerp(color, Colors.white, 0.4)!,
+                                    size: 40,
+                                    semanticLabel: _voiceOn ? 'Voice guidance on' : 'Voice guidance off',
+                                    onTap: _toggleVoice,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GlassIconButton(
+                                    key: const Key('tone'),
+                                    icon: _bed != null ? Icons.music_note_rounded : Icons.music_off_rounded,
+                                    active: _bed != null,
+                                    activeColor: Color.lerp(color, Colors.white, 0.4)!,
+                                    size: 40,
+                                    semanticLabel: _bed != null ? 'Tone on' : 'Tone off',
+                                    onTap: _toggleBed,
+                                  ),
                                 ],
                               ),
                             ),
@@ -240,6 +304,8 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
                                                 ? '${spot.left.ceil()}'
                                                 : _clock(_length.inSeconds.toDouble()),
                                     large: _count != null || (started && !_done),
+                                    side: started && !_done && _count == null ? _p.phases[spot.phase].side : null,
+                                    color: color,
                                   ),
                                 ],
                               ),
@@ -326,10 +392,12 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
                                                 onTap: _restart,
                                               ),
                                               const SizedBox(width: 28),
-                                              _StartButton(
-                                                running: running || _count != null,
-                                                started: started,
+                                              MetalPlayButton(
+                                                key: const Key('play'),
+                                                playing: running || _count != null,
                                                 color: color,
+                                                size: 82,
+                                                label: running ? 'Pause' : (started ? 'Resume' : 'Begin'),
                                                 onTap: _toggle,
                                               ),
                                               const SizedBox(width: 80),
@@ -419,12 +487,23 @@ class _Header extends StatelessWidget {
 /// The centre of the shape: a small eyebrow or the phase word, and a big
 /// number (countdown, count-in or session length).
 class _Readout extends StatelessWidget {
-  const _Readout({required this.number, this.eyebrow, this.word, this.large = false});
+  const _Readout({
+    required this.number,
+    required this.color,
+    this.eyebrow,
+    this.word,
+    this.large = false,
+    this.side,
+  });
 
   final String? eyebrow;
   final String? word;
   final String number;
   final bool large;
+  final Color color;
+
+  /// Which nostril, for alternate-nostril breathing.
+  final String? side;
 
   @override
   Widget build(BuildContext context) {
@@ -474,6 +553,25 @@ class _Readout extends StatelessWidget {
             ),
           ),
         ),
+        if (side != null) ...[
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.black.withValues(alpha: 0.3),
+              border: Border.all(color: color.withValues(alpha: 0.7), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(side == 'left' ? Icons.west_rounded : Icons.east_rounded, size: 12, color: Colors.white),
+                const SizedBox(width: 4),
+                Text('${side!.toUpperCase()} NOSTRIL', style: capsStyle(color: Colors.white, size: 9)),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -555,54 +653,6 @@ class _RoundDots extends StatelessWidget {
   }
 }
 
-class _StartButton extends StatelessWidget {
-  const _StartButton({required this.running, required this.started, required this.color, required this.onTap});
-
-  final bool running;
-  final bool started;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = Color.lerp(color, Colors.black, 0.65)!;
-    return Semantics(
-      button: true,
-      label: running ? 'Pause' : (started ? 'Resume' : 'Begin'),
-      child: GestureDetector(
-        key: const Key('play'),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 82,
-          height: 82,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, Color.lerp(color, Colors.white, 0.55)!],
-            ),
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: running ? 0.6 : 0.35), blurRadius: running ? 38 : 24),
-            ],
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 240),
-            transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-            child: Icon(
-              running ? Icons.pause_rounded : Icons.play_arrow_rounded,
-              key: ValueKey(running),
-              color: ink,
-              size: 40,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _CompletionCard extends ConsumerWidget {
   const _CompletionCard({
     super.key,
@@ -665,51 +715,28 @@ class _CompletionCard extends ConsumerWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(child: _Pill(label: 'Again', onTap: onAgain)),
+              Expanded(
+                child: ActionPill(
+                  label: 'Again',
+                  icon: Icons.replay_rounded,
+                  color: pattern.color,
+                  expand: true,
+                  onTap: onAgain,
+                ),
+              ),
               const SizedBox(width: 10),
               Expanded(
-                child: _Pill(label: 'Done', filled: true, onTap: () => Navigator.of(context).maybePop()),
+                child: ActionPill(
+                  label: 'Done',
+                  icon: Icons.check_rounded,
+                  color: pattern.color,
+                  expand: true,
+                  onTap: () => Navigator.of(context).maybePop(),
+                ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.onTap, this.filled = false});
-
-  final String label;
-  final VoidCallback onTap;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: filled ? Colors.white : Colors.white.withValues(alpha: 0.12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.8),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: filled ? AppTheme.bgTop : Colors.white,
-            ),
-          ),
-        ),
       ),
     );
   }

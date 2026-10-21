@@ -7,9 +7,9 @@ import '../providers/providers.dart';
 import '../services/practice_store.dart';
 import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
-import '../widgets/card_face.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
+import '../widgets/medallion.dart';
 import '../widgets/seamless_route.dart';
 import 'inner_lake_screen.dart';
 import 'player_screen.dart';
@@ -51,7 +51,7 @@ class _GuidedMeditationsScreenState extends ConsumerState<GuidedMeditationsScree
       header: const FeatureHeader(
         heroTag: 'card-guided',
         style: CardStyles.guided,
-        eyebrow: '6 SESSIONS · 1 INTERACTIVE',
+        eyebrow: '7 SESSIONS',
         title: 'Guided Sessions',
         subtitle: 'Timed guidance on healing tones',
       ),
@@ -114,55 +114,67 @@ class _TodaysPick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = meditation;
+    final style = CardStyles.session(m.scene);
+    final metal = Color.lerp(style.glow, Colors.white, 0.3)!;
     final tag = 'med-pick-${m.id}';
     return GlowCard(
-      style: CardStyles.session(m.scene),
-      heroTag: tag,
-      height: 248,
-      borderRadius: 28,
+      style: style,
+      height: 236,
+      borderRadius: 26,
       semanticLabel: "Today's pick: ${m.title}",
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 18, 18, 18),
       onTap: () => pushSeamless(context, PlayerScreen.session(meditation: m, heroTag: tag)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Flexible(child: _Chip(icon: Icons.auto_awesome_rounded, text: "TODAY'S PICK · $when")),
-              if (done) ...[const SizedBox(width: 8), const _Chip(icon: Icons.check_rounded, text: 'DONE')],
+              Flexible(child: _Chip(icon: Icons.auto_awesome_rounded, text: "TODAY'S PICK · $when", color: style.glow)),
+              if (done) ...[
+                const SizedBox(width: 8),
+                _Chip(icon: Icons.check_rounded, text: 'DONE', color: style.glow),
+              ],
             ],
           ),
-          const Spacer(),
-          Text(m.category.toUpperCase(), style: capsStyle(color: Colors.white.withValues(alpha: 0.85), size: 10)),
-          const SizedBox(height: 6),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              m.title,
-              maxLines: 1,
-              style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
-                fontWeight: FontWeight.w600,
-                fontSize: 36,
-                height: 1,
-                color: Colors.white,
-                shadows: textOnArt,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            m.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
-              fontSize: 12.5,
-              height: 1.35,
-              color: Colors.white.withValues(alpha: 0.85),
-              shadows: textOnArt,
+          const SizedBox(height: 14),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(m.category.toUpperCase(), style: capsStyle(color: metal, size: 9.5)),
+                      const SizedBox(height: 6),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          m.title,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontFamily: 'CormorantGaramond',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 32,
+                            height: 1,
+                            color: AppTheme.ivory,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        m.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: mutedStyle.copyWith(fontSize: 12, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Medallion(style: style, size: 108, heroTag: tag),
+              ],
             ),
           ),
           const SizedBox(height: 14),
@@ -175,25 +187,16 @@ class _TodaysPick extends StatelessWidget {
                   child: Row(
                     children: [
                       _Meta(icon: Icons.schedule_rounded, text: '${m.minutes} min'),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       _Meta(icon: Icons.graphic_eq_rounded, text: '${m.hz} Hz'),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       _Meta(icon: Icons.format_list_bulleted_rounded, text: '${m.chapters.length} chapters'),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                  boxShadow: [BoxShadow(color: m.color.withValues(alpha: 0.55), blurRadius: 20)],
-                ),
-                child: Icon(Icons.play_arrow_rounded, size: 28, color: Color.lerp(m.color, Colors.black, 0.65)),
-              ),
+              _PlayButton(color: style.glow, size: 44),
             ],
           ),
         ],
@@ -202,32 +205,56 @@ class _TodaysPick extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.icon, required this.text});
+/// Hairline play circle in the card's metal, as on the money cards.
+class _PlayButton extends StatelessWidget {
+  const _PlayButton({required this.color, this.size = 38});
 
-  final IconData icon;
-  final String text;
+  final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 0.8),
+      ),
+      child: Icon(Icons.play_arrow_rounded, color: Color.lerp(color, Colors.white, 0.45), size: size * 0.55),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.icon, required this.text, required this.color});
+
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final metal = Color.lerp(color, Colors.white, 0.35)!;
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.black.withValues(alpha: 0.3),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.24), width: 0.6),
+        color: color.withValues(alpha: 0.08),
+        border: Border.all(color: color.withValues(alpha: 0.45), width: 0.7),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: Colors.white),
+          Icon(icon, size: 11, color: metal),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: capsStyle(color: Colors.white, size: 8.5),
+              style: capsStyle(color: metal, size: 8.5),
             ),
           ),
         ],
@@ -245,7 +272,7 @@ class _Meta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? Colors.white.withValues(alpha: 0.85);
+    final c = color ?? AppTheme.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -291,9 +318,11 @@ class _CategoryChips extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(22),
-                    color: c == selected ? Colors.white : Colors.white.withValues(alpha: 0.06),
+                    color: c == selected ? CardStyles.guided.glow.withValues(alpha: 0.14) : Colors.transparent,
                     border: Border.all(
-                      color: c == selected ? Colors.white : Colors.white.withValues(alpha: 0.14),
+                      color: c == selected
+                          ? CardStyles.guided.glow.withValues(alpha: 0.8)
+                          : Colors.white.withValues(alpha: 0.12),
                       width: 0.8,
                     ),
                   ),
@@ -306,7 +335,7 @@ class _CategoryChips extends StatelessWidget {
                           fontFamily: 'Quicksand',
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: c == selected ? AppTheme.bgTop : AppTheme.textPrimary,
+                          color: c == selected ? AppTheme.ivory : AppTheme.textMuted,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -316,7 +345,9 @@ class _CategoryChips extends StatelessWidget {
                           fontFamily: 'Quicksand',
                           fontWeight: FontWeight.w700,
                           fontSize: 11,
-                          color: c == selected ? AppTheme.bgTop.withValues(alpha: 0.55) : AppTheme.textMuted,
+                          color: c == selected
+                              ? Color.lerp(CardStyles.guided.glow, Colors.white, 0.3)
+                              : AppTheme.textMuted.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -343,38 +374,20 @@ class _SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = meditation;
+    final style = CardStyles.session(m.scene);
     final tag = 'med-${m.id}';
-    final accent = Color.lerp(m.color, Colors.white, 0.25)!;
+    final metal = Color.lerp(style.glow, Colors.white, 0.3)!;
     return GlowCard(
-      style: CardStyles.glass(m.color),
-      height: 132,
+      style: CardStyles.glass(style.glow),
+      height: 124,
       borderRadius: 24,
       semanticLabel: m.title,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
       contentAlignment: Alignment.centerLeft,
       onTap: () => pushSeamless(context, PlayerScreen.session(meditation: m, heroTag: tag)),
       child: Row(
         children: [
-          SizedBox.square(
-            dimension: 104,
-            child: CardHero(
-              tag: tag,
-              face: CardFace(
-                style: CardStyles.session(m.scene),
-                borderRadius: 18,
-                elevation: 0.6,
-                scrim: 0.45,
-                padding: const EdgeInsets.all(8),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    '${m.minutes} MIN',
-                    style: capsStyle(color: Colors.white, size: 8.5).copyWith(shadows: textOnArt),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Medallion(style: style, size: 92, heroTag: tag),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -382,12 +395,12 @@ class _SessionRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${m.category.toUpperCase()} · ${m.hz} HZ',
+                  '${m.category.toUpperCase()} · ${m.minutes} MIN · ${m.hz} HZ',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: capsStyle(color: accent, size: 9),
+                  style: capsStyle(color: metal, size: 8.5),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 6),
                 Text(
                   m.title,
                   maxLines: 1,
@@ -397,93 +410,81 @@ class _SessionRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize: 23,
                     height: 1,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.ivory,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
                   m.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: mutedStyle.copyWith(fontSize: 11.5, height: 1.3),
                 ),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    _Meta(
-                      icon: Icons.format_list_bulleted_rounded,
-                      text: '${m.chapters.length} chapters',
-                      color: AppTheme.textMuted,
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: done
-                          ? const _Meta(icon: Icons.check_circle_rounded, text: 'Completed', color: AppTheme.teal)
-                          : _Meta(icon: Icons.signal_cellular_alt_rounded, text: m.level, color: AppTheme.textMuted),
-                    ),
-                  ],
-                ),
+                if (done) ...[
+                  const SizedBox(height: 5),
+                  _Meta(icon: Icons.check_circle_rounded, text: 'Completed', color: metal),
+                ],
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: m.color.withValues(alpha: 0.16),
-              border: Border.all(color: accent.withValues(alpha: 0.6), width: 0.8),
-            ),
-            child: Icon(Icons.play_arrow_rounded, color: accent, size: 22),
-          ),
+          const SizedBox(width: 10),
+          _PlayButton(color: style.glow),
         ],
       ),
     );
   }
 }
 
-/// The interactive meditation; its card becomes the whole lake.
+/// The interactive meditation; its medallion opens into the whole lake.
 class _InnerLakeCard extends StatelessWidget {
   const _InnerLakeCard();
 
   @override
   Widget build(BuildContext context) {
+    const style = CardStyles.innerLake;
+    final metal = Color.lerp(style.glow, Colors.white, 0.3)!;
     return GlowCard(
-      style: CardStyles.innerLake,
-      heroTag: 'lake-card',
-      height: 150,
+      style: style,
+      height: 132,
       borderRadius: 24,
       semanticLabel: 'Inner Lake',
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(14, 14, 18, 14),
+      contentAlignment: Alignment.centerLeft,
       onTap: () => pushSeamless(context, const InnerLakeScreen()),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const _Chip(icon: Icons.touch_app_rounded, text: 'INTERACTIVE · HOLD TO BREATHE'),
-          const Spacer(),
-          const Text(
-            'Inner Lake',
-            style: TextStyle(
-              fontFamily: 'CormorantGaramond',
-              fontWeight: FontWeight.w600,
-              fontSize: 28,
-              height: 1,
-              color: Colors.white,
-              shadows: textOnArt,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Still the water with your breath. See to the bottom.',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.85),
-              shadows: textOnArt,
+          const Medallion(style: style, size: 100, heroTag: 'lake-card'),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _Chip(icon: Icons.touch_app_rounded, text: 'INTERACTIVE', color: style.glow),
+                const SizedBox(height: 10),
+                const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Inner Lake',
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 27,
+                      height: 1,
+                      color: AppTheme.ivory,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Hold to breathe. Still the water, see to the bottom.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: mutedStyle.copyWith(fontSize: 11.5, height: 1.3, color: metal.withValues(alpha: 0.8)),
+                ),
+              ],
             ),
           ),
         ],

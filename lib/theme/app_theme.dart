@@ -6,18 +6,19 @@ import '../widgets/seamless_route.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color bgTop = Color(0xFF0A0E27);
-  static const Color bgBottom = Color(0xFF1B1038);
-  static const Color surface = Color(0xFF171A33);
-  static const Color surfaceLight = Color(0xFF232745);
+  // Onyx grounds (the private-collection look, app-wide).
+  static const Color bgTop = Color(0xFF0B0A10);
+  static const Color bgBottom = Color(0xFF100D18);
+  static const Color surface = Color(0xFF15131B);
+  static const Color surfaceLight = Color(0xFF1F1D27);
   static const Color violet = Color(0xFF8B7CF6);
   static const Color pink = Color(0xFFE879B8);
   static const Color teal = Color(0xFF5EEAD4);
   static const Color gold = Color(0xFFF6C77A);
   static const Color sky = Color(0xFF6EA8F6);
   static const Color amber = Color(0xFFF0956B);
-  static const Color textPrimary = Color(0xFFF4F1FF);
-  static const Color textMuted = Color(0xFFA9A3C7);
+  static const Color textPrimary = Color(0xFFF3EEE6);
+  static const Color textMuted = Color(0xFFA9A3AE);
 
   // Private-collection palette: onyx, champagne gold and ivory.
   static const Color onyx = Color(0xFF07070A);

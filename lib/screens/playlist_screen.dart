@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/card_face.dart';
 import '../widgets/feature_scaffold.dart';
+import '../widgets/luxury.dart';
+import '../widgets/medallion.dart';
 
 /// Playlists: each flow is a card with its session's artwork as cover.
 class PlaylistScreen extends ConsumerStatefulWidget {
@@ -57,35 +59,11 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
           ),
         Align(
           alignment: Alignment.centerLeft,
-          child: Semantics(
-            button: true,
+          child: ActionPill(
             label: 'Add flow',
-            child: GestureDetector(
-              onTap: () => _addFlow(playlist),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  gradient: const LinearGradient(colors: [Color(0xFFB34A86), Color(0xFF6B54E0)]),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
-                  boxShadow: [
-                    BoxShadow(color: AppTheme.pink.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                    SizedBox(width: 6),
-                    Text(
-                      'Add flow',
-                      style: TextStyle(
-                          fontFamily: 'Quicksand', fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            icon: Icons.add_rounded,
+            color: CardStyles.playlists.glow,
+            onTap: () => _addFlow(playlist),
           ),
         ),
       ],
@@ -139,10 +117,7 @@ class _PlaylistRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
       child: Row(
         children: [
-          SizedBox.square(
-            dimension: 52,
-            child: CardFace(style: cover, borderRadius: 14, padding: EdgeInsets.zero, scrim: 0, elevation: 0),
-          ),
+          Medallion(style: cover, size: 56),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

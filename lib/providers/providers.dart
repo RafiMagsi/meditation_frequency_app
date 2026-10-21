@@ -299,6 +299,7 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
         rounds: 8,
         color: Color(0xFF6EA8F6),
         bestFor: 'FOCUS',
+        tone: 'assets/audio/tone_741hz.m4a',
         phases: [
           BreathPhase(BreathMove.inhale, 4, 'Breathe in slowly through the nose'),
           BreathPhase(BreathMove.hold, 4, 'Hold, soft shoulders'),
@@ -315,6 +316,7 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
         rounds: 4,
         color: Color(0xFF9B87F5),
         bestFor: 'SLEEP',
+        tone: 'assets/audio/tone_852hz.m4a',
         phases: [
           BreathPhase(BreathMove.inhale, 4, 'Quietly in through the nose'),
           BreathPhase(BreathMove.hold, 7, 'Hold, tongue behind the top teeth'),
@@ -330,6 +332,7 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
         rounds: 11,
         color: Color(0xFF5EEAD4),
         bestFor: 'BALANCE',
+        tone: 'assets/audio/tone_528hz.m4a',
         phases: [
           BreathPhase(BreathMove.inhale, 5.5, 'Fill from the belly up'),
           BreathPhase(BreathMove.exhale, 5.5, 'Let it fall away'),
@@ -345,6 +348,7 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
         rounds: 5,
         color: Color(0xFF7DD3FC),
         bestFor: 'QUICK CALM',
+        tone: 'assets/audio/tone_396hz.m4a',
         phases: [
           BreathPhase(BreathMove.inhale, 2, 'Deep breath in through the nose', to: 0.75),
           BreathPhase(BreathMove.inhale, 1, 'Sip in a little more', label: 'Top up'),
@@ -360,11 +364,75 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
         rounds: 6,
         color: Color(0xFFF6C77A),
         bestFor: 'ABUNDANCE',
+        tone: 'assets/audio/tone_888hz.m4a',
         phases: [
           BreathPhase(BreathMove.inhale, 4, 'I receive', label: 'Receive'),
           BreathPhase(BreathMove.hold, 4, 'I am worthy', label: 'Hold'),
           BreathPhase(BreathMove.exhale, 6, 'Thank you', label: 'Give thanks'),
         ],
+      ),
+      BreathPattern(
+        id: 'nadi',
+        name: 'Alternate Nostril',
+        rhythm: '4 · 4 · 4  L ⇄ R',
+        benefit: 'Balance and clear the mind',
+        why:
+            'Nadi shodhana: slow breathing through one nostril at a time calms the nervous system and steadies attention.',
+        rounds: 4,
+        color: Color(0xFFB9A8FF),
+        bestFor: 'CLARITY',
+        tone: 'assets/audio/tone_639hz.m4a',
+        phases: [
+          BreathPhase(BreathMove.inhale, 4, 'Close the right nostril. In through the left',
+              side: 'left', voice: 'In through the left'),
+          BreathPhase(BreathMove.hold, 4, 'Close both. Hold softly'),
+          BreathPhase(BreathMove.exhale, 4, 'Open the right. Out through the right',
+              side: 'right', voice: 'Out through the right'),
+          BreathPhase(BreathMove.inhale, 4, 'In through the right', side: 'right', voice: 'In through the right'),
+          BreathPhase(BreathMove.hold, 4, 'Close both. Hold softly'),
+          BreathPhase(BreathMove.exhale, 4, 'Open the left. Out through the left',
+              side: 'left', voice: 'Out through the left'),
+        ],
+      ),
+    ]);
+
+/// Speaking practices — completed by voice, not by tapping.
+final voicePracticesProvider = Provider<List<VoicePractice>>((_) => const [
+      VoicePractice(
+        kind: VoiceKind.affirm,
+        name: 'Spoken Affirmations',
+        benefit: 'Say it until you believe it',
+        how: 'Read each affirmation aloud. Words light up as you say them; three times each.',
+        color: Color(0xFFE6C27A),
+        minutes: 3,
+        icon: Icons.record_voice_over_rounded,
+      ),
+      VoicePractice(
+        kind: VoiceKind.gratitude,
+        name: 'Gratitude Aloud',
+        benefit: 'Speak three thanks into your journal',
+        how: 'Answer each prompt out loud. Your words are written into your journal.',
+        color: Color(0xFFF2A98C),
+        minutes: 2,
+        icon: Icons.volunteer_activism_rounded,
+      ),
+      VoicePractice(
+        kind: VoiceKind.om,
+        name: 'Om Chant',
+        benefit: 'Five long Aums to settle the mind',
+        how: 'Breathe in, then chant Aum — A, U, M — for six seconds or more.',
+        color: Color(0xFFB9A8FF),
+        minutes: 3,
+        emblem: 'AUM',
+      ),
+      VoicePractice(
+        kind: VoiceKind.hum,
+        name: 'Bee Breath',
+        benefit: 'Bhramari: hum away tension',
+        how: 'Close your ears gently, breathe in, then hum like a bee on the exhale.',
+        color: Color(0xFFF2C14E),
+        minutes: 3,
+        icon: Icons.hive_rounded,
       ),
     ]);
 

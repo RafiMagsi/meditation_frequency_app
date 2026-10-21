@@ -10,6 +10,7 @@ import '../widgets/breathing_orb.dart';
 import '../widgets/deck.dart';
 import '../widgets/glow_card.dart';
 import '../widgets/luxury.dart';
+import '../widgets/medallion.dart';
 import '../widgets/seamless_route.dart';
 import 'abundance_screen.dart';
 import 'breathwork_screen.dart';
@@ -21,6 +22,7 @@ import 'playlist_screen.dart';
 import 'progress_screen.dart';
 import 'ritual_screen.dart';
 import 'timer_screen.dart';
+import 'voice_screen.dart';
 
 /// The card hub. Every feature is a card with its own artwork; cards are
 /// dealt in on arrival, and tapping one sends the deck sliding off to the
@@ -86,7 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _FeatureCard(
                         title: 'Frequencies',
                         subtitle: '7 Solfeggio tones',
-                        icon: Icons.graphic_eq_rounded,
                         heroTag: 'card-frequencies',
                         height: 186,
                         style: CardStyles.frequencies,
@@ -99,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _FeatureCard(
                         title: 'Guided\nMeditations',
                         subtitle: '7 sessions',
-                        icon: Icons.self_improvement_rounded,
                         heroTag: 'card-guided',
                         height: 186,
                         style: CardStyles.guided,
@@ -118,8 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       flex: 2,
                       child: _FeatureCard(
                         title: 'Breathwork',
-                        subtitle: '5 guided rhythms',
-                        icon: Icons.air_rounded,
+                        subtitle: '6 rhythms',
                         heroTag: 'card-breath',
                         height: 156,
                         style: CardStyles.breath,
@@ -130,13 +129,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       flex: 3,
                       child: _FeatureCard(
-                        title: 'Focus Timer',
-                        subtitle: 'Breathe with the tide',
-                        icon: Icons.timer_rounded,
-                        heroTag: 'card-timer',
+                        title: 'Voice',
+                        subtitle: 'Speak · chant · hum',
+                        heroTag: 'card-voice',
                         height: 156,
-                        style: CardStyles.timer,
-                        onTap: () => pushSeamless(context, const TimerScreen()),
+                        style: CardStyles.voice,
+                        onTap: () => pushSeamless(context, const VoiceScreen()),
                       ),
                     ),
                   ],
@@ -152,7 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _FeatureCard(
                         title: 'Mood',
                         subtitle: 'How do you feel?',
-                        icon: Icons.wb_sunny_rounded,
                         heroTag: 'card-mood',
                         height: 156,
                         style: CardStyles.mood,
@@ -163,13 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       flex: 2,
                       child: _FeatureCard(
-                        title: 'Playlists',
-                        subtitle: 'Your flows',
-                        icon: Icons.queue_music_rounded,
-                        heroTag: 'card-playlists',
+                        title: 'Focus Timer',
+                        subtitle: 'Breathe with the tide',
+                        heroTag: 'card-timer',
                         height: 156,
-                        style: CardStyles.playlists,
-                        onTap: () => pushSeamless(context, const PlaylistScreen()),
+                        style: CardStyles.timer,
+                        onTap: () => pushSeamless(context, const TimerScreen()),
                       ),
                     ),
                   ],
@@ -181,31 +177,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   children: [
                     Expanded(
+                      flex: 2,
+                      child: _FeatureCard(
+                        title: 'Playlists',
+                        subtitle: 'Your flows',
+                        heroTag: 'card-playlists',
+                        height: 156,
+                        style: CardStyles.playlists,
+                        onTap: () => pushSeamless(context, const PlaylistScreen()),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
                       flex: 3,
                       child: _FeatureCard(
                         title: 'Progress',
                         subtitle: 'Streaks & journal',
-                        icon: Icons.insights_rounded,
                         heroTag: 'card-progress',
                         height: 156,
                         style: CardStyles.progress,
                         onTap: () => pushSeamless(context, const ProgressScreen()),
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      flex: 2,
-                      child: _FeatureCard(
-                        title: 'Aura Meter',
-                        subtitle: 'Sound field',
-                        icon: Icons.radar_rounded,
-                        heroTag: 'card-meter',
-                        height: 156,
-                        style: CardStyles.meter,
-                        onTap: () => pushSeamless(context, const FrequencyMeterScreen()),
-                      ),
-                    ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              DeckItem(
+                index: 7,
+                child: _FeatureCard(
+                  title: 'Aura Meter',
+                  subtitle: 'Visualize your sound field',
+                  heroTag: 'card-meter',
+                  height: 136,
+                  style: CardStyles.meter,
+                  onTap: () => pushSeamless(context, const FrequencyMeterScreen()),
                 ),
               ),
             ],
@@ -225,81 +231,65 @@ class _RitualCard extends ConsumerWidget {
     final ritual = ref.watch(ritualNowProvider);
     final practice = ref.watch(practiceProvider);
     final done = practice.practisedToday && practice.lastDay != null;
-    final morning = ritual.id == 'morning';
+    final metal = Color.lerp(ritual.style.glow, Colors.white, 0.3)!;
     return GlowCard(
       style: ritual.style,
       heroTag: 'card-ritual',
-      height: 150,
+      height: 140,
       semanticLabel: ritual.name,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 18, 16),
+      contentAlignment: Alignment.centerLeft,
       onTap: () => pushSeamless(context, RitualScreen(ritual: ritual)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.black.withValues(alpha: 0.3),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 0.6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(morning ? Icons.wb_twilight_rounded : Icons.nights_stay_rounded,
-                          size: 12, color: Colors.white),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          ritual.eyebrow,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: capsStyle(color: Colors.white, size: 9),
-                        ),
+          Medallion(style: ritual.style, size: 96),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        ritual.eyebrow,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: capsStyle(color: metal, size: 9.5),
                       ),
-                    ],
+                    ),
+                    StreakChip(days: practice.streak),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    ritual.name,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 27,
+                      height: 1,
+                      color: AppTheme.ivory,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              StreakChip(days: practice.streak),
-            ],
-          ),
-          const Spacer(),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              ritual.name,
-              maxLines: 1,
-              style: TextStyle(
-                fontFamily: 'CormorantGaramond',
-                fontWeight: FontWeight.w600,
-                fontSize: 30,
-                height: 1,
-                color: ritual.style.foreground,
-                shadows: textOnArt,
-              ),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            done
-                ? 'Practised today · keep the streak alive tomorrow'
-                : morning
-                    ? 'Gratitude · intention · vision · action'
-                    : 'Reflect · release · reaffirm · give thanks',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
-              fontSize: 11.5,
-              color: ritual.style.muted,
-              shadows: textOnArt,
+                const SizedBox(height: 6),
+                Text(
+                  done
+                      ? 'Practised today · keep the streak alive'
+                      : ritual.id == 'morning'
+                          ? 'Gratitude · intention · vision · action'
+                          : 'Reflect · release · reaffirm · give thanks',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: mutedStyle.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
           ),
         ],
@@ -343,8 +333,8 @@ class _Header extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: Colors.white.withValues(alpha: 0.06),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            color: AppTheme.goldMid.withValues(alpha: 0.06),
+            border: Border.all(color: AppTheme.goldMid.withValues(alpha: 0.4), width: 0.8),
           ),
           child: Row(
             children: [
@@ -429,7 +419,6 @@ class _FeatureCard extends StatelessWidget {
   const _FeatureCard({
     required this.title,
     required this.subtitle,
-    required this.icon,
     required this.heroTag,
     required this.height,
     required this.style,
@@ -438,7 +427,6 @@ class _FeatureCard extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final IconData icon;
   final String heroTag;
   final double height;
   final CardStyle style;
@@ -446,54 +434,7 @@ class _FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconBadge = Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 0.8),
-      ),
-      child: Icon(icon, color: Colors.white, size: 20),
-    );
-
-    final texts = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            title,
-            maxLines: 2,
-            style: TextStyle(
-              fontFamily: 'CormorantGaramond',
-              fontWeight: FontWeight.w600,
-              fontSize: 24,
-              height: 1.02,
-              color: style.foreground,
-              shadows: textOnArt,
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: 'Quicksand',
-            fontWeight: FontWeight.w600,
-            fontSize: 11.5,
-            color: style.muted,
-            shadows: textOnArt,
-          ),
-        ),
-      ],
-    );
-
+    final metal = Color.lerp(style.glow, Colors.white, 0.3)!;
     return GlowCard(
       style: style,
       heroTag: heroTag,
@@ -504,9 +445,45 @@ class _FeatureCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          iconBadge,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Medallion(style: style, size: height > 170 ? 66 : 56),
+              const Spacer(),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: style.glow.withValues(alpha: 0.45), width: 0.8),
+                ),
+                child: Icon(Icons.arrow_outward_rounded, size: 14, color: metal),
+              ),
+            ],
+          ),
           const Spacer(),
-          texts,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title,
+              maxLines: 2,
+              style: const TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.w600,
+                fontSize: 24,
+                height: 1.02,
+                color: AppTheme.ivory,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: capsStyle(color: metal, size: 9),
+          ),
         ],
       ),
     );

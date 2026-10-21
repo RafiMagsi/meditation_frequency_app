@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glass_button.dart';
+import '../widgets/luxury.dart';
 
 /// Breathing focus timer: a tide circle that inhales and exhales (4 s
 /// each) while the session counts down.
@@ -185,22 +186,11 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                         height: 58,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(18),
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomLeft,
-                            end: Alignment.topRight,
-                            colors: _minutes == m
-                                ? const [Color(0xFF1C2E66), Color(0xFF4A78C8)]
-                                : const [Color(0xFF12152B), Color(0xFF1B1F3D)],
-                          ),
+                          color: _minutes == m ? _tide.withValues(alpha: 0.12) : const Color(0xFF111015),
                           border: Border.all(
                             color: _minutes == m ? _tide.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.08),
+                            width: 0.9,
                           ),
-                          boxShadow: _minutes == m
-                              ? [
-                                  BoxShadow(
-                                      color: _tide.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6))
-                                ]
-                              : null,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +202,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                                 fontWeight: FontWeight.w600,
                                 fontSize: 22,
                                 height: 1,
-                                color: _minutes == m ? Colors.white : AppTheme.textPrimary,
+                                color: _minutes == m ? AppTheme.ivory : AppTheme.textPrimary,
                               ),
                             ),
                             Text('MIN',
@@ -233,42 +223,12 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
             children: [
               GlassIconButton(icon: Icons.refresh_rounded, size: 56, semanticLabel: 'Reset', onTap: _reset),
               const SizedBox(width: 24),
-              Semantics(
-                button: true,
+              MetalPlayButton(
+                playing: _running,
+                color: _tide,
+                size: 78,
                 label: _running ? 'Pause' : 'Start',
-                child: GestureDetector(
-                  onTap: _toggle,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: 78,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.bottomLeft,
-                        end: Alignment.topRight,
-                        colors: [Color(0xFF2E4680), Color(0xFF7DB4FA)],
-                      ),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _tide.withValues(alpha: _running ? 0.55 : 0.3),
-                          blurRadius: _running ? 36 : 20,
-                        ),
-                      ],
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 240),
-                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                      child: Icon(
-                        _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                        key: ValueKey(_running),
-                        color: Colors.white,
-                        size: 38,
-                      ),
-                    ),
-                  ),
-                ),
+                onTap: _toggle,
               ),
               const SizedBox(width: 80),
             ],

@@ -4,6 +4,47 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
+/// Brushed foil in any metal: the accent with lighter and darker bands,
+/// like the gold foil of the money cards.
+LinearGradient foilFor(Color accent) => LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.lerp(accent, Colors.black, 0.2)!,
+        Color.lerp(accent, Colors.white, 0.6)!,
+        Color.lerp(accent, Colors.white, 0.15)!,
+        Color.lerp(accent, Colors.white, 0.75)!,
+        Color.lerp(accent, Colors.black, 0.15)!,
+      ],
+      stops: const [0, 0.28, 0.5, 0.72, 1],
+    );
+
+/// Text filled with [foilFor] an accent metal.
+class FoilText extends StatelessWidget {
+  const FoilText(this.text, {super.key, required this.accent, required this.style, this.maxLines, this.textAlign});
+
+  final String text;
+  final Color accent;
+  final TextStyle style;
+  final int? maxLines;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (bounds) => foilFor(accent).createShader(bounds),
+      child: Text(
+        text,
+        maxLines: maxLines,
+        overflow: maxLines == null ? null : TextOverflow.ellipsis,
+        textAlign: textAlign,
+        style: style.copyWith(color: Colors.white),
+      ),
+    );
+  }
+}
+
 /// Text filled with brushed gold foil.
 class GoldText extends StatelessWidget {
   const GoldText(this.text, {super.key, required this.style, this.textAlign});
@@ -18,6 +59,143 @@ class GoldText extends StatelessWidget {
       blendMode: BlendMode.srcIn,
       shaderCallback: (bounds) => AppTheme.goldFoil.createShader(bounds),
       child: Text(text, textAlign: textAlign, style: style.copyWith(color: Colors.white)),
+    );
+  }
+}
+
+/// Primary action in the private-collection style: a hairline of the
+/// accent metal around a faint metal wash, with an ivory label.
+class ActionPill extends StatelessWidget {
+  const ActionPill({
+    super.key,
+    required this.label,
+    required this.onTap,
+    required this.color,
+    this.icon,
+    this.enabled = true,
+    this.expand = false,
+  });
+
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+  final IconData? icon;
+  final bool enabled;
+
+  /// Fill the available width (e.g. side-by-side pairs).
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    final metal = Color.lerp(color, Colors.white, 0.4)!;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 250),
+          opacity: enabled ? 1 : 0.4,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: color.withValues(alpha: 0.14),
+              border: Border.all(color: color.withValues(alpha: 0.75), width: 0.9),
+              boxShadow: enabled ? [BoxShadow(color: color.withValues(alpha: 0.18), blurRadius: 18)] : null,
+            ),
+            child: Row(
+              mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 18, color: metal),
+                  const SizedBox(width: 6),
+                ],
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppTheme.ivory,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Round start/pause control: an onyx centre inside a foil ring of the
+/// screen's metal (the player's play ring, in any colour).
+class MetalPlayButton extends StatelessWidget {
+  const MetalPlayButton({
+    super.key,
+    required this.playing,
+    required this.color,
+    required this.onTap,
+    this.size = 80,
+    this.label,
+  });
+
+  final bool playing;
+  final Color color;
+  final VoidCallback onTap;
+  final double size;
+
+  /// Semantics label; defaults to Play/Pause.
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label ?? (playing ? 'Pause' : 'Play'),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          width: size,
+          height: size,
+          padding: const EdgeInsets.all(2.2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: foilFor(color),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: playing ? 0.45 : 0.2), blurRadius: playing ? 36 : 18),
+            ],
+          ),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: Alignment(-0.3, -0.4),
+                colors: [Color(0xFF26232C), Color(0xFF0B0A0E)],
+              ),
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                key: ValueKey(playing),
+                color: Color.lerp(color, Colors.white, 0.45),
+                size: size * 0.46,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

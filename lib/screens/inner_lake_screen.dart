@@ -11,6 +11,7 @@ import '../theme/card_styles.dart';
 import '../widgets/card_face.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
+import '../widgets/luxury.dart';
 import '../widgets/scene_art.dart';
 
 /// "Our being is like a lake; the true self lies at the bottom, hidden
@@ -116,6 +117,7 @@ class _InnerLakeScreenState extends ConsumerState<InnerLakeScreen> with TickerPr
               tag: 'lake-card',
               face: CardFace(
                 style: CardStyles.innerLake,
+                art: true,
                 borderRadius: 0,
                 padding: EdgeInsets.zero,
                 scrim: 0,
@@ -217,28 +219,11 @@ class _InnerLakeScreenState extends ConsumerState<InnerLakeScreen> with TickerPr
                           ),
                           const SizedBox(height: 14),
                           if (_still)
-                            Semantics(
-                              button: true,
-                              label: 'Return',
-                              child: GestureDetector(
-                                onTap: () => Navigator.of(context).maybePop(),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(26),
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                  child: const Text(
-                                    'Carry the stillness',
-                                    style: TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                      color: Color(0xFF0B1620),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            ActionPill(
+                              label: 'Carry the stillness',
+                              icon: Icons.spa_outlined,
+                              color: CardStyles.innerLake.glow,
+                              onTap: () => Navigator.of(context).maybePop(),
                             )
                           else
                             Text(
