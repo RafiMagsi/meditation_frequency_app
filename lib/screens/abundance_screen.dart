@@ -70,7 +70,9 @@ class _BlackCardFace extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: 17,
               letterSpacing: 2.2,
-              shadows: [Shadow(color: Colors.black.withValues(alpha: 0.6), offset: const Offset(0, 1.5), blurRadius: 2)],
+              shadows: [
+                Shadow(color: Colors.black.withValues(alpha: 0.6), offset: const Offset(0, 1.5), blurRadius: 2)
+              ],
             ),
           ),
         ),

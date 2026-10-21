@@ -41,9 +41,8 @@ class TonePlayback extends ChangeNotifier {
   Duration get position => _position;
   Duration get duration => _duration;
 
-  double get progress => _duration.inMilliseconds == 0
-      ? 0
-      : (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0);
+  double get progress =>
+      _duration.inMilliseconds == 0 ? 0 : (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0);
 
   Future<void> init() async {
     if (simulateAudio) {
@@ -131,8 +130,7 @@ class TonePlayback extends ChangeNotifier {
     });
   }
 
-  Future<void> seekFraction(double fraction) =>
-      seek(_duration * fraction.clamp(0.0, 1.0));
+  Future<void> seekFraction(double fraction) => seek(_duration * fraction.clamp(0.0, 1.0));
 
   Future<void> skip(Duration delta) {
     final target = _position + delta;

@@ -1,6 +1,8 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../theme/card_styles.dart';
 import 'gloss.dart';
@@ -71,12 +73,14 @@ class CardFace extends StatelessWidget {
                 ),
               ),
             ),
-            if (style.scene != Scene.none)
+            if (style.image != null)
+              Positioned.fill(child: CardPhoto(style: style))
+            else if (style.scene != Scene.none)
               Positioned.fill(child: SceneArt(scene: style.scene, accent: style.glow)),
             if (scrim > 0)
               Positioned.fill(
                 child: DecoratedBox(
-                  decoration: BoxDecoration(gradient: _scrim(style.scene.isArt, scrim)),
+                  decoration: BoxDecoration(gradient: _scrim(style.hasArt, scrim)),
                 ),
               ),
             Padding(padding: padding, child: child ?? const SizedBox.shrink()),
@@ -115,6 +119,88 @@ class CardFace extends StatelessWidget {
         Colors.black.withValues(alpha: 0),
       ],
       stops: const [0, 0.45, 0.8],
+    );
+  }
+}
+
+/// A card's photograph: a slow Ken Burns drift keeps it alive, and a
+/// grade toward the card's palette makes every photo feel part of one
+/// art direction. Falls back to the painted scene if it can't load.
+class CardPhoto extends StatefulWidget {
+  const CardPhoto({super.key, required this.style});
+
+  final CardStyle style;
+
+  @override
+  State<CardPhoto> createState() => _CardPhotoState();
+}
+
+class _CardPhotoState extends State<CardPhoto> with SingleTickerProviderStateMixin {
+  final ValueNotifier<double> _t = ValueNotifier(ArtClock.value);
+  late final Ticker _ticker;
+  Duration _last = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker((elapsed) {
+      if (elapsed - _last < const Duration(milliseconds: 32)) return;
+      _last = elapsed;
+      _t.value = ArtClock.value;
+    })
+      ..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _t.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = widget.style;
+    final photo = Image.asset(
+      style.image!,
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (context, _, __) => SceneArt(scene: style.scene, accent: style.glow),
+    );
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Own layer: the drift repaints only the photo, not the card.
+        RepaintBoundary(
+          child: ValueListenableBuilder<double>(
+            valueListenable: _t,
+            child: photo,
+            builder: (context, t, child) {
+              // One slow breath of zoom and drift per 24 s loop.
+              final a = t * 2 * math.pi;
+              return Transform.scale(
+                scale: 1.08 + 0.04 * math.sin(a),
+                alignment: Alignment(0.3 * math.cos(a), 0.2 * math.sin(a)),
+                child: child,
+              );
+            },
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomLeft,
+              end: Alignment.topRight,
+              colors: [
+                style.colors.first.withValues(alpha: 0.55),
+                style.colors[1].withValues(alpha: 0.28),
+                style.colors.last.withValues(alpha: 0.12),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -29,8 +29,7 @@ class MoneyPlayerScreen extends ConsumerStatefulWidget {
   ConsumerState<MoneyPlayerScreen> createState() => _MoneyPlayerScreenState();
 }
 
-class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen>
-    with TickerProviderStateMixin {
+class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen> with TickerProviderStateMixin {
   late final TonePlayback _playback = TonePlayback(widget.frequency.audioPath)..init();
 
   /// Coherent breathing, 5 s in / 5 s out; each new inhale turns the
@@ -52,6 +51,7 @@ class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen>
   );
 
   int _affirmation = 0;
+  bool _wasPlaying = false;
   final List<double> _index = [];
   late final double _openingIndex;
   Timer? _market;
@@ -79,17 +79,19 @@ class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen>
 
   void _onPlayback() {
     final playing = _playback.playing;
-    if (playing && !_spin.isAnimating) {
+    if (playing == _wasPlaying) return; // position ticks also notify
+    _wasPlaying = playing;
+    if (playing) {
+      // repeat() also takes over from an unfinished settle below.
       _spin.repeat();
       _turn.repeat();
       _market ??= Timer.periodic(const Duration(milliseconds: 450), (_) => _tickMarket());
-    } else if (!playing && _market != null) {
+    } else {
       _market?.cancel();
       _market = null;
       _turn.stop();
       // Finish the turn so the coin rests face-up.
-      _spin.animateTo(1, duration: Duration(milliseconds: (1400 * (1 - _spin.value)).round() + 200))
-          .whenComplete(() {
+      _spin.animateTo(1, duration: Duration(milliseconds: (1400 * (1 - _spin.value)).round() + 200)).whenComplete(() {
         if (mounted && !_playback.playing) _spin.value = 0;
       });
     }
@@ -443,62 +445,62 @@ class _AbundanceIndex extends StatelessWidget {
             Flexible(
               flex: 3,
               child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('ABUNDANCE INDEX', style: capsStyle(color: AppTheme.taupe, size: 9)),
-                    const SizedBox(width: 6),
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
-                      opacity: live ? 1 : 0,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(color: AppTheme.prosper, shape: BoxShape.circle),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GoldText(
-                      _money(value),
-                      style: const TextStyle(
-                        fontFamily: 'CormorantGaramond',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 27,
-                        height: 1,
-                        fontFeatures: [FontFeature.liningFigures(), FontFeature.tabularFigures()],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.prosper.withValues(alpha: 0.12),
-                      ),
-                      child: Text.rich(
-                        TextSpan(children: [
-                          TextSpan(text: '▲ ', style: _glyph(AppTheme.prosper, 10)),
-                          TextSpan(
-                            text: '${change.abs().toStringAsFixed(2)}%',
-                            style: capsStyle(color: AppTheme.prosper, size: 9.5).copyWith(letterSpacing: 0.5),
+                    Row(
+                      children: [
+                        Text('ABUNDANCE INDEX', style: capsStyle(color: AppTheme.taupe, size: 9)),
+                        const SizedBox(width: 6),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: live ? 1 : 0,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(color: AppTheme.prosper, shape: BoxShape.circle),
                           ),
-                        ]),
-                      ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        GoldText(
+                          _money(value),
+                          style: const TextStyle(
+                            fontFamily: 'CormorantGaramond',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 27,
+                            height: 1,
+                            fontFeatures: [FontFeature.liningFigures(), FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: AppTheme.prosper.withValues(alpha: 0.12),
+                          ),
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(text: '▲ ', style: _glyph(AppTheme.prosper, 10)),
+                              TextSpan(
+                                text: '${change.abs().toStringAsFixed(2)}%',
+                                style: capsStyle(color: AppTheme.prosper, size: 9.5).copyWith(letterSpacing: 0.5),
+                              ),
+                            ]),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
               ),
             ),
             const SizedBox(width: 12),

@@ -1,21 +1,23 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/practice_store.dart';
 import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/card_face.dart';
 import '../widgets/feature_scaffold.dart';
 
 /// Progress: stat cards, an animated week chart and an insight card.
-class ProgressScreen extends StatefulWidget {
+class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
 
   @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProviderStateMixin {
+class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _chart = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1300),
@@ -42,8 +44,8 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final practice = ref.watch(practiceProvider);
     final total = _week.fold<int>(0, (a, b) => a + b);
-    const streak = 6;
     return FeatureScaffold(
       accent: AppTheme.gold,
       header: FeatureHeader(
@@ -60,10 +62,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
               child: _StatCard(label: 'Minutes', value: '$total', color: AppTheme.gold, icon: Icons.schedule_rounded),
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: _StatCard(
                 label: 'Day streak',
-                value: '$streak',
+                value: '${practice.streak}',
                 color: AppTheme.amber,
                 icon: Icons.local_fire_department_rounded,
               ),
@@ -71,10 +73,10 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             const SizedBox(width: 10),
             Expanded(
               child: _StatCard(
-                label: 'Sessions',
-                value: '${_week.where((v) => v > 0).length}',
+                label: 'Rituals',
+                value: '${practice.rituals}',
                 color: AppTheme.teal,
-                icon: Icons.spa_rounded,
+                icon: Icons.wb_twilight_rounded,
               ),
             ),
           ],
@@ -105,6 +107,7 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
             ],
           ),
         ),
+        _JournalCard(entries: practice.journal, breathMinutes: practice.breathSeconds ~/ 60),
         const CardFace(
           style: CardStyles.progress,
           borderRadius: 24,
@@ -131,6 +134,59 @@ class _ProgressScreenState extends State<ProgressScreen> with SingleTickerProvid
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The latest gratitude, actions and reflections from the rituals.
+class _JournalCard extends StatelessWidget {
+  const _JournalCard({required this.entries, required this.breathMinutes});
+
+  final List<JournalEntry> entries;
+  final int breathMinutes;
+
+  static const _labels = {'gratitude': 'GRATEFUL FOR', 'action': 'INSPIRED ACTION', 'reflection': 'REFLECTION'};
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassPanel(
+      accent: AppTheme.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('JOURNAL', style: capsStyle(size: 10)),
+              const Spacer(),
+              const Icon(Icons.air_rounded, size: 14, color: AppTheme.teal),
+              const SizedBox(width: 4),
+              Text('$breathMinutes breath min', style: mutedStyle.copyWith(fontSize: 11.5)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (entries.isEmpty)
+            Text(
+              'Your gratitude and inspired actions collect here as you complete rituals.',
+              style: mutedStyle.copyWith(fontSize: 12.5, height: 1.4),
+            )
+          else
+            for (final e in entries.take(3)) ...[
+              Text(_labels[e.kind] ?? e.kind.toUpperCase(), style: capsStyle(color: AppTheme.gold, size: 9)),
+              const SizedBox(height: 3),
+              Text(
+                e.text,
+                style: const TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 19,
+                  height: 1.2,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+        ],
+      ),
     );
   }
 }

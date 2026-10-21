@@ -114,8 +114,7 @@ class _SignatureLineState extends State<SignatureLine> with SingleTickerProvider
 }
 
 class _SignaturePainter extends CustomPainter {
-  _SignaturePainter({required this.clock, required this.amp, required this.color})
-      : super(repaint: clock);
+  _SignaturePainter({required this.clock, required this.amp, required this.color}) : super(repaint: clock);
 
   final ValueNotifier<double> clock;
   final double amp;
@@ -132,9 +131,7 @@ class _SignaturePainter extends CustomPainter {
       for (var i = 0; i <= 120; i++) {
         final u = i / 120;
         final env = math.pow(math.sin(math.pi * u), 1.6).toDouble();
-        final y = mid +
-            size.height * 0.42 * height * amp * env *
-                math.sin((u * cycles + t * drift * 12) * 2 * math.pi);
+        final y = mid + size.height * 0.42 * height * amp * env * math.sin((u * cycles + t * drift * 12) * 2 * math.pi);
         i == 0 ? path.moveTo(0, y) : path.lineTo(u * size.width, y);
       }
       canvas.drawPath(path, paint);
@@ -447,9 +444,7 @@ class BreathCue extends StatelessWidget {
     return AnimatedBuilder(
       animation: breath,
       builder: (context, _) {
-        final text = !active
-            ? idle
-            : (breath.status == AnimationStatus.reverse ? exhale : inhale);
+        final text = !active ? idle : (breath.status == AnimationStatus.reverse ? exhale : inhale);
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 700),
           child: Text(

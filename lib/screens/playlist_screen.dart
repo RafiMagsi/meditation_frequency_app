@@ -68,7 +68,9 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                   borderRadius: BorderRadius.circular(30),
                   gradient: const LinearGradient(colors: [Color(0xFFB34A86), Color(0xFF6B54E0)]),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
-                  boxShadow: [BoxShadow(color: AppTheme.pink.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))],
+                  boxShadow: [
+                    BoxShadow(color: AppTheme.pink.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))
+                  ],
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -77,7 +79,8 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen> {
                     SizedBox(width: 6),
                     Text(
                       'Add flow',
-                      style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                      style: TextStyle(
+                          fontFamily: 'Quicksand', fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
                     ),
                   ],
                 ),

@@ -13,8 +13,7 @@ class SeamlessRoute<T> extends PageRouteBuilder<T> {
           transitionDuration: const Duration(milliseconds: 820),
           reverseTransitionDuration: const Duration(milliseconds: 600),
           pageBuilder: (_, __, ___) => page,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-              DeckTransition(
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => DeckTransition(
             animation: animation,
             secondaryAnimation: secondaryAnimation,
             child: child,
@@ -75,8 +74,7 @@ class _DeckTransitionState extends State<DeckTransition> {
   @override
   void didUpdateWidget(DeckTransition oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.animation != widget.animation ||
-        oldWidget.secondaryAnimation != widget.secondaryAnimation) {
+    if (oldWidget.animation != widget.animation || oldWidget.secondaryAnimation != widget.secondaryAnimation) {
       _enter.dispose();
       _cover.dispose();
       _curve();

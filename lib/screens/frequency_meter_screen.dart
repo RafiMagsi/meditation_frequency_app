@@ -15,8 +15,7 @@ class FrequencyMeterScreen extends StatefulWidget {
   State<FrequencyMeterScreen> createState() => _FrequencyMeterScreenState();
 }
 
-class _FrequencyMeterScreenState extends State<FrequencyMeterScreen>
-    with SingleTickerProviderStateMixin {
+class _FrequencyMeterScreenState extends State<FrequencyMeterScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),

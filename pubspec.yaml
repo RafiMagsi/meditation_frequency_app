@@ -10,6 +10,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.5.3
   just_audio: ^0.9.34
+  shared_preferences: ^2.5.6
 
 dev_dependencies:
   flutter_test:
@@ -21,6 +22,7 @@ flutter:
   assets:
     - assets/audio/
     - assets/images/
+    - assets/images/cards/
   fonts:
     - family: CormorantGaramond
       fonts:

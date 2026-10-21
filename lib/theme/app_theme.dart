@@ -98,8 +98,7 @@ const TextStyle mutedStyle = TextStyle(
 );
 
 /// Tracked small caps label ("NOW PLAYING", "FOR YOU").
-TextStyle capsStyle({Color color = AppTheme.textMuted, double size = 11}) =>
-    TextStyle(
+TextStyle capsStyle({Color color = AppTheme.textMuted, double size = 11}) => TextStyle(
       fontFamily: 'Quicksand',
       fontWeight: FontWeight.w700,
       fontSize: size,

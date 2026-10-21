@@ -8,6 +8,7 @@ import '../theme/card_styles.dart';
 import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
 import '../widgets/seamless_route.dart';
+import 'inner_lake_screen.dart';
 import 'player_screen.dart';
 
 /// Guided meditations: the forest card opens into illustrated sessions;
@@ -23,11 +24,12 @@ class GuidedMeditationsScreen extends ConsumerWidget {
       header: const FeatureHeader(
         heroTag: 'card-guided',
         style: CardStyles.guided,
-        eyebrow: '6 SESSIONS · 5 – 20 MIN',
+        eyebrow: '7 SESSIONS · 5 – 20 MIN',
         title: 'Guided Sessions',
         subtitle: 'Breath-led flows on healing tones',
       ),
       children: [
+        const _InnerLakeCard(),
         for (var i = 0; i < meditations.length; i += 2)
           Row(
             children: [
@@ -41,6 +43,70 @@ class GuidedMeditationsScreen extends ConsumerWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// The interactive meditation; its card becomes the whole lake.
+class _InnerLakeCard extends StatelessWidget {
+  const _InnerLakeCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GlowCard(
+      style: CardStyles.innerLake,
+      heroTag: 'lake-card',
+      height: 150,
+      borderRadius: 24,
+      semanticLabel: 'Inner Lake',
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      onTap: () => pushSeamless(context, const InnerLakeScreen()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.black.withValues(alpha: 0.28),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 0.6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.touch_app_rounded, size: 11, color: Colors.white),
+                const SizedBox(width: 4),
+                Text('INTERACTIVE', style: capsStyle(color: Colors.white, size: 8.5)),
+              ],
+            ),
+          ),
+          const Spacer(),
+          const Text(
+            'Inner Lake',
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.w600,
+              fontSize: 28,
+              height: 1,
+              color: Colors.white,
+              shadows: textOnArt,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Still the water with your breath. See the bottom.',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.85),
+              shadows: textOnArt,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -196,7 +196,10 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                             color: _minutes == m ? _tide.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.08),
                           ),
                           boxShadow: _minutes == m
-                              ? [BoxShadow(color: _tide.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6))]
+                              ? [
+                                  BoxShadow(
+                                      color: _tide.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6))
+                                ]
                               : null,
                         ),
                         child: Column(
@@ -212,7 +215,8 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                                 color: _minutes == m ? Colors.white : AppTheme.textPrimary,
                               ),
                             ),
-                            Text('MIN', style: capsStyle(color: _minutes == m ? Colors.white70 : AppTheme.textMuted, size: 8)),
+                            Text('MIN',
+                                style: capsStyle(color: _minutes == m ? Colors.white70 : AppTheme.textMuted, size: 8)),
                           ],
                         ),
                       ),

@@ -117,9 +117,7 @@ class GoldCoin extends StatelessWidget {
     }
 
     // Painter's algorithm: draw the far side first.
-    final order = showBack
-        ? [for (var k = 0; k <= layers; k++) k]
-        : [for (var k = layers; k >= 0; k--) k];
+    final order = showBack ? [for (var k = 0; k <= layers; k++) k] : [for (var k = layers; k >= 0; k--) k];
     return SizedBox.square(
       dimension: size,
       child: Stack(children: [for (final k in order) layer(k)]),
@@ -230,8 +228,7 @@ class _CoinFacePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CoinFacePainter old) =>
-      old.emblem != emblem || old.caption != caption || old.glint != glint;
+  bool shouldRepaint(_CoinFacePainter old) => old.emblem != emblem || old.caption != caption || old.glint != glint;
 }
 
 /// Watch-dial bezel around the player's jewel: minute track, gold
@@ -400,6 +397,5 @@ class _DialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DialPainter old) =>
-      old.progress != progress || old.rotation != rotation || old.accent != accent;
+  bool shouldRepaint(_DialPainter old) => old.progress != progress || old.rotation != rotation || old.accent != accent;
 }

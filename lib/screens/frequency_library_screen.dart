@@ -22,7 +22,7 @@ class FrequencyLibraryScreen extends ConsumerWidget {
       header: const FeatureHeader(
         heroTag: 'card-frequencies',
         style: CardStyles.frequencies,
-        eyebrow: '6 TONES · 396 – 852 HZ',
+        eyebrow: '7 TONES · 396 – 963 HZ',
         title: 'Frequencies',
         subtitle: 'Solfeggio healing tones',
       ),
