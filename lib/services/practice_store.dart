@@ -35,6 +35,7 @@ class PracticeState {
     required this.breathSeconds,
     required this.stillness,
     required this.journal,
+    this.completed = const [],
   });
 
   final List<String> intentions;
@@ -45,6 +46,9 @@ class PracticeState {
   final int breathSeconds;
   final int stillness;
   final List<JournalEntry> journal;
+
+  /// Ids of guided sessions finished at least once.
+  final List<String> completed;
 
   String get focusIntention =>
       intentions.isEmpty ? 'I am open to everything good.' : intentions[focus.clamp(0, intentions.length - 1)];
@@ -76,6 +80,7 @@ class PracticeState {
     int? breathSeconds,
     int? stillness,
     List<JournalEntry>? journal,
+    List<String>? completed,
   }) =>
       PracticeState(
         intentions: intentions ?? this.intentions,
@@ -86,6 +91,7 @@ class PracticeState {
         breathSeconds: breathSeconds ?? this.breathSeconds,
         stillness: stillness ?? this.stillness,
         journal: journal ?? this.journal,
+        completed: completed ?? this.completed,
       );
 
   Map<String, dynamic> toJson() => {
@@ -97,6 +103,7 @@ class PracticeState {
         'breathSeconds': breathSeconds,
         'stillness': stillness,
         'journal': [for (final e in journal) e.toJson()],
+        'completed': completed,
       };
 
   static PracticeState fromJson(Map<String, dynamic> j) => PracticeState(
@@ -108,6 +115,7 @@ class PracticeState {
         breathSeconds: j['breathSeconds'] as int,
         stillness: j['stillness'] as int,
         journal: [for (final e in j['journal'] as List) JournalEntry.fromJson(e as Map<String, dynamic>)],
+        completed: [for (final c in (j['completed'] as List?) ?? const []) c as String],
       );
 }
 
@@ -172,6 +180,15 @@ class PracticeNotifier extends StateNotifier<PracticeState> {
       breathSeconds: state.breathSeconds + seconds,
     );
     _save();
+  }
+
+  /// A guided session listened to the end.
+  void completeSession(String id) {
+    recordPractice('meditation');
+    if (!state.completed.contains(id)) {
+      state = state.copyWith(completed: [...state.completed, id]);
+      _save();
+    }
   }
 
   void addJournal(String kind, Iterable<String> texts) {

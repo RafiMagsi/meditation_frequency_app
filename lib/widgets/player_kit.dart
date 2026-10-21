@@ -159,12 +159,16 @@ class LuxuryProgress extends StatelessWidget {
     required this.position,
     required this.duration,
     required this.onSeek,
+    this.marks = const [],
   });
 
   final double progress;
   final Duration position;
   final Duration duration;
   final ValueChanged<double> onSeek;
+
+  /// Chapter starts (0–1), drawn as ticks on the track.
+  final List<double> marks;
 
   static String _fmt(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -192,7 +196,7 @@ class LuxuryProgress extends StatelessWidget {
               child: SizedBox(
                 height: 26,
                 width: double.infinity,
-                child: CustomPaint(painter: _TrackPainter(progress)),
+                child: CustomPaint(painter: _TrackPainter(progress, marks)),
               ),
             );
           },
@@ -210,15 +214,27 @@ class LuxuryProgress extends StatelessWidget {
 }
 
 class _TrackPainter extends CustomPainter {
-  const _TrackPainter(this.progress);
+  const _TrackPainter(this.progress, [this.marks = const []]);
 
   final double progress;
+  final List<double> marks;
 
   @override
   void paint(Canvas canvas, Size size) {
     final y = size.height / 2;
     final track = RRect.fromLTRBR(0, y - 1, size.width, y + 1, const Radius.circular(1));
     canvas.drawRRect(track, Paint()..color = AppTheme.ivory.withValues(alpha: 0.12));
+    for (final m in marks) {
+      if (m <= 0) continue;
+      final mx = size.width * m;
+      canvas.drawLine(
+        Offset(mx, y - 4),
+        Offset(mx, y + 4),
+        Paint()
+          ..strokeWidth = 1.2
+          ..color = m <= progress ? AppTheme.champagne : AppTheme.goldMid.withValues(alpha: 0.45),
+      );
+    }
     final x = size.width * progress.clamp(0.0, 1.0);
     if (x > 0) {
       canvas.drawRRect(
@@ -242,7 +258,7 @@ class _TrackPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_TrackPainter old) => old.progress != progress;
+  bool shouldRepaint(_TrackPainter old) => old.progress != progress || old.marks != marks;
 }
 
 /// Onyx play button inside a turning gold-foil ring.

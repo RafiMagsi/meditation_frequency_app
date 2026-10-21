@@ -179,6 +179,16 @@ abstract final class CardStyles {
         scene: Scene.waves,
       );
 
+  /// A breath rhythm's card: a deep, luminous field of its own colour.
+  static CardStyle breathPattern(Color color) => CardStyle(
+        colors: [
+          Color.lerp(color, const Color(0xFF05060F), 0.86)!,
+          Color.lerp(color, const Color(0xFF05060F), 0.62)!,
+          Color.lerp(color, const Color(0xFF05060F), 0.3)!,
+        ],
+        glow: color,
+      );
+
   /// Onyx card with banknote-style engraving for money frequencies.
   static const money = CardStyle(
     colors: [Color(0xFF0B0A08), Color(0xFF15120C), Color(0xFF221B10)],

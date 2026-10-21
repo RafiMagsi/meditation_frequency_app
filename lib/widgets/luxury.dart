@@ -242,6 +242,7 @@ class GuillocheDial extends StatelessWidget {
     required this.rotation,
     this.accent = AppTheme.goldMid,
     this.innerRadiusFactor = 0.6,
+    this.marks = const [],
     this.child,
   });
 
@@ -249,6 +250,9 @@ class GuillocheDial extends StatelessWidget {
   final double progress;
   final double rotation;
   final Color accent;
+
+  /// Chapter starts (0–1), set as small diamonds in the bezel.
+  final List<double> marks;
 
   /// Where the engraving stops, as a fraction of the dial radius.
   final double innerRadiusFactor;
@@ -264,6 +268,7 @@ class GuillocheDial extends StatelessWidget {
           rotation: rotation,
           accent: accent,
           inner: innerRadiusFactor,
+          marks: marks,
         ),
         child: Center(child: child),
       ),
@@ -277,12 +282,14 @@ class _DialPainter extends CustomPainter {
     required this.rotation,
     required this.accent,
     required this.inner,
+    this.marks = const [],
   });
 
   final double progress;
   final double rotation;
   final Color accent;
   final double inner;
+  final List<double> marks;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -376,6 +383,21 @@ class _DialPainter extends CustomPainter {
           ).createShader(rect),
       );
     }
+    // Chapter diamonds: champagne once reached, gold ahead.
+    for (final m in marks) {
+      if (m <= 0) continue;
+      final a = -math.pi / 2 + 2 * math.pi * m;
+      final mp = c + Offset(math.cos(a), math.sin(a)) * (outer - 24);
+      canvas.save();
+      canvas.translate(mp.dx, mp.dy);
+      canvas.rotate(a + math.pi / 4);
+      canvas.drawRect(
+        const Rect.fromLTWH(-2.6, -2.6, 5.2, 5.2),
+        Paint()..color = m <= progress ? const Color(0xFFFFF1C9) : accent.withValues(alpha: 0.6),
+      );
+      canvas.restore();
+    }
+
     final head = -math.pi / 2 + sweep;
     final hp = c + Offset(math.cos(head), math.sin(head)) * (outer + 3);
     canvas.drawCircle(
@@ -397,5 +419,6 @@ class _DialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DialPainter old) => old.progress != progress || old.rotation != rotation || old.accent != accent;
+  bool shouldRepaint(_DialPainter old) =>
+      old.progress != progress || old.rotation != rotation || old.accent != accent || old.marks != marks;
 }

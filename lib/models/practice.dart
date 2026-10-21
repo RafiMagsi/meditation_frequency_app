@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../theme/card_styles.dart';
 
 enum BreathMove { inhale, hold, exhale, rest }
@@ -40,12 +42,19 @@ class BreathPattern {
     required this.why,
     required this.phases,
     required this.rounds,
-    required this.style,
+    required this.color,
+    required this.bestFor,
     this.shape = BreathShape.orb,
   });
 
   final String id;
   final String name;
+
+  /// The rhythm's own colour; every surface of the exercise derives from it.
+  final Color color;
+
+  /// "SLEEP", "FOCUS" … shown as the card's eyebrow.
+  final String bestFor;
 
   /// e.g. "4 · 7 · 8".
   final String rhythm;
@@ -55,8 +64,9 @@ class BreathPattern {
   final String why;
   final List<BreathPhase> phases;
   final int rounds;
-  final CardStyle style;
   final BreathShape shape;
+
+  CardStyle get style => CardStyles.breathPattern(color);
 
   double get cycleSeconds => phases.fold(0, (sum, p) => sum + p.seconds);
   Duration get duration => Duration(milliseconds: (cycleSeconds * rounds * 1000).round());

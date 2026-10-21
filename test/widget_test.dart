@@ -86,37 +86,64 @@ void main() {
     expect(find.text('Infinite Abundance'), findsOneWidget);
   });
 
-  testWidgets('A guided session morphs into the private-collection player', (tester) async {
+  testWidgets('A guided session reads its script as timed chapters', (tester) async {
     await openHub(tester);
 
     await tester.tap(find.text('Guided\nMeditations'));
     await settle(tester);
-    expect(find.text('Morning Clarity'), findsOneWidget);
+    expect(find.textContaining("TODAY'S PICK"), findsOneWidget);
 
-    await tester.tap(find.text('Morning Clarity'));
+    // Filter to Heart (the chip row scrolls sideways): only its session
+    // remains, then open it.
+    await tester.ensureVisible(find.text('Heart'));
+    await tester.pump();
+    await tester.tap(find.text('Heart'));
+    await settle(tester, 600);
+    expect(find.textContaining("TODAY'S PICK"), findsNothing);
+    expect(find.text('Heart Open'), findsOneWidget);
+    expect(find.text('Deep Calm'), findsNothing);
+    await tester.tap(find.text('Heart Open'));
     await settle(tester);
-    expect(find.text('THE PRIVATE COLLECTION'), findsOneWidget);
-    expect(find.text('Coherent breathing · 6 breaths a minute'), findsOneWidget);
+    expect(find.text('GUIDED · THE PRIVATE COLLECTION'), findsOneWidget);
+    expect(find.text('READY · 5 CHAPTERS · 8 CUES'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('play')));
     await settle(tester, 1500);
-    expect(find.text('00:00'), findsNothing); // timeline is running
-    expect(
-      find.text('Breathe in').evaluate().length + find.text('Breathe out').evaluate().length,
-      1,
-    );
+    expect(find.text('CHAPTER 1 OF 5 · ARRIVE'), findsOneWidget);
+    expect(find.text('Rest a hand over your heart and feel its warmth.'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.skip_next_rounded));
+    await settle(tester, 1200);
+    expect(find.text('CHAPTER 2 OF 5 · YOURSELF'), findsOneWidget);
+    expect(find.text('Silently offer yourself: may I be happy, may I be at ease.'), findsOneWidget);
+
+    // Skipping past the last chapter completes the session (streak 6 → 7).
+    for (var i = 0; i < 4; i++) {
+      await tester.tap(find.byIcon(Icons.skip_next_rounded));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await settle(tester, 600);
+    expect(find.text('SESSION COMPLETE · DAY 7'), findsOneWidget);
   });
 
-  testWidgets('Box breathing counts in, then guides each phase', (tester) async {
+  testWidgets('Box breathing: adjustable rounds, count-in, then each phase', (tester) async {
     await openHub(tester);
     await tester.tap(find.text('Breathwork'));
     await settle(tester);
-    expect(find.text('Physiological Sigh'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^FOR (THIS|TONIGHT)')), findsOneWidget); // time-aware pick
+    expect(find.text('BEST FOR FOCUS'), findsOneWidget);
 
-    await tester.tap(find.text('Box Breathing'));
+    await tester.tap(find.text('Box Breathing').last);
     await settle(tester);
-    expect(find.text('ROUND 1 / 8'), findsOneWidget);
     expect(find.text('READY'), findsOneWidget);
+    expect(find.text('8 ROUNDS'), findsOneWidget);
+    expect(find.text('2:08'), findsWidgets); // readout + header
+
+    // More rounds lengthens the session (9 × 16 s = 2:24).
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pump();
+    expect(find.text('9 ROUNDS'), findsOneWidget);
+    expect(find.text('2:24'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('play')));
     await tester.pump();
@@ -126,13 +153,14 @@ void main() {
     // 3 s count-in, then 1.5 s into the first inhale (4 s): 3 s left.
     await tester.pump(const Duration(seconds: 3));
     await tester.pump(const Duration(milliseconds: 1500));
-    expect(find.text('INHALE'), findsNWidgets(2)); // readout + timeline chip
+    expect(find.text('ROUND 1 OF 9'), findsOneWidget);
+    expect(find.text('Inhale'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('Breathe in slowly through the nose'), findsOneWidget);
 
     // Into the hold.
     await tester.pump(const Duration(seconds: 3));
-    expect(find.text('HOLD'), findsWidgets);
+    expect(find.text('Hold'), findsOneWidget);
     expect(find.text('Hold, soft shoulders'), findsOneWidget);
   });
 

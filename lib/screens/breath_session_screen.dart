@@ -9,33 +9,34 @@ import '../models/practice.dart';
 import '../services/practice_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/breath_visual.dart';
 import '../widgets/card_face.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 
-/// An interactive breath guide: the shape breathes with you, each phase
-/// is named and counted down, haptics mark every change, and finishing
-/// a session counts toward the streak.
+/// An interactive breath guide. The shape breathes with you, each phase
+/// is named, counted down and felt as a haptic, the whole screen glows
+/// fuller on the inhale, and finishing counts toward the streak.
 class BreathSessionScreen extends ConsumerStatefulWidget {
-  const BreathSessionScreen({super.key, required this.pattern});
+  const BreathSessionScreen({super.key, required this.pattern, required this.heroTag});
 
   final BreathPattern pattern;
+
+  /// The card this session morphs out of.
+  final String heroTag;
 
   @override
   ConsumerState<BreathSessionScreen> createState() => _BreathSessionScreenState();
 }
 
-typedef _Spot = ({int round, int phase, double t, double left});
-
 class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with SingleTickerProviderStateMixin {
   BreathPattern get _p => widget.pattern;
 
+  late int _rounds = _p.rounds;
+
   /// The whole session as one timeline; round and phase are derived from
   /// elapsed time, so pause/resume is exact.
-  late final AnimationController _session = AnimationController(
-    vsync: this,
-    duration: _p.duration,
-  )
+  late final AnimationController _session = AnimationController(vsync: this, duration: _length)
     ..addListener(_onTick)
     ..addStatusListener(_onStatus);
 
@@ -44,18 +45,16 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
   int _lastPhase = -1;
   bool _done = false;
 
-  _Spot _locate() {
-    final elapsed = _session.value * _p.cycleSeconds * _p.rounds;
-    final round = math.min((elapsed / _p.cycleSeconds).floor(), _p.rounds - 1);
-    var within = elapsed - round * _p.cycleSeconds;
-    for (var i = 0; i < _p.phases.length; i++) {
-      final s = _p.phases[i].seconds;
-      if (within < s || i == _p.phases.length - 1) {
-        return (round: round, phase: i, t: (within / s).clamp(0.0, 1.0), left: (s - within).clamp(0.0, s));
-      }
-      within -= s;
-    }
-    return (round: round, phase: 0, t: 0, left: _p.phases.first.seconds);
+  Duration get _length => Duration(milliseconds: (_p.cycleSeconds * _rounds * 1000).round());
+  bool get _started => _session.isAnimating || _session.value > 0;
+
+  ({int round, int phase, double t, double left, double level}) _locate() {
+    final elapsed = _session.value * _p.cycleSeconds * _rounds;
+    final round = math.min((elapsed / _p.cycleSeconds).floor(), _rounds - 1);
+    final within = (elapsed - round * _p.cycleSeconds) / _p.cycleSeconds;
+    final spot = breathSpotAt(_p, within);
+    final left = _p.phases[spot.phase].seconds * (1 - spot.t);
+    return (round: round, phase: spot.phase, t: spot.t, left: left, level: spot.level);
   }
 
   void _onTick() {
@@ -73,7 +72,7 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
     if (status == AnimationStatus.completed && !_done) {
       setState(() => _done = true);
       HapticFeedback.heavyImpact();
-      ref.read(practiceProvider.notifier).recordPractice('breath', seconds: _p.duration.inSeconds);
+      ref.read(practiceProvider.notifier).recordPractice('breath', seconds: _length.inSeconds);
     }
   }
 
@@ -114,6 +113,14 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
     });
   }
 
+  void _setRounds(int rounds) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _rounds = rounds.clamp(2, 20);
+      _session.duration = _length;
+    });
+  }
+
   @override
   void dispose() {
     _countIn?.cancel();
@@ -128,192 +135,218 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
 
   @override
   Widget build(BuildContext context) {
-    final glow = _p.style.glow;
+    final color = _p.color;
     return Scaffold(
       backgroundColor: AppTheme.bgTop,
       body: AmbientBackground(
-        colors: [Color.lerp(AppTheme.bgTop, glow, 0.18)!, AppTheme.bgTop, const Color(0xFF080A1C)],
-        accents: [glow, Color.lerp(glow, AppTheme.violet, 0.5)!],
-        particleCount: 12,
+        colors: [Color.lerp(AppTheme.bgTop, color, 0.2)!, const Color(0xFF080A1C), const Color(0xFF05060F)],
+        accents: [color, Color.lerp(color, AppTheme.violet, 0.5)!],
+        particleCount: 14,
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final visual = math.min(constraints.maxWidth - 30, constraints.maxHeight - 430).clamp(180.0, 320.0);
-                return AnimatedBuilder(
-                  animation: _session,
-                  builder: (context, _) {
-                    final spot = _locate();
-                    final running = _session.isAnimating;
-                    final started = running || _session.value > 0;
-                    final phase = _p.phases[spot.phase];
-                    final levels = _p.levels;
-                    final from = levels[(spot.phase - 1) % levels.length];
-                    final level =
-                        started ? from + (levels[spot.phase] - from) * Curves.easeInOut.transform(spot.t) : 0.0;
-                    final remaining = _p.cycleSeconds * _p.rounds * (1 - _session.value);
-
-                    return Column(
-                      children: [
-                        DeckItem(
-                          index: 0,
-                          child: Row(
-                            children: [
-                              const BackGlassButton(),
-                              const Spacer(),
-                              Text(
-                                'ROUND ${spot.round + 1} / ${_p.rounds}',
-                                style: capsStyle(color: AppTheme.textPrimary.withValues(alpha: 0.8), size: 10.5),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final visual = math.min(constraints.maxWidth - 24, constraints.maxHeight - 410).clamp(200.0, 360.0);
+              return AnimatedBuilder(
+                animation: _session,
+                builder: (context, _) {
+                  final spot = _locate();
+                  final started = _started;
+                  final running = _session.isAnimating;
+                  final level = started ? spot.level : 0.5;
+                  final remaining = _p.cycleSeconds * _rounds * (1 - _session.value);
+                  return Stack(
+                    children: [
+                      // The room fills with light as you breathe in.
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: RadialGradient(
+                                center: const Alignment(0, -0.05),
+                                radius: 0.55 + 0.35 * level,
+                                colors: [color.withValues(alpha: 0.1 + 0.16 * level), color.withValues(alpha: 0)],
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 98,
-                          child: CardHero(
-                            tag: 'breath-${_p.id}',
-                            face: CardFace(
-                              style: _p.style,
-                              borderRadius: 24,
-                              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-                              contentAlignment: Alignment.centerLeft,
-                              child: _HeaderContent(pattern: _p, remaining: _clock(remaining)),
                             ),
                           ),
                         ),
-                        const Spacer(),
-                        SizedBox.square(
-                          dimension: visual,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  painter: _BreathPainter(
-                                    shape: _p.shape,
-                                    phases: _p.phases,
-                                    phase: spot.phase,
-                                    t: started ? spot.t : 0,
-                                    level: level,
-                                    glow: glow,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                        child: Column(
+                          children: [
+                            DeckItem(
+                              index: 0,
+                              child: Row(
+                                children: [
+                                  const BackGlassButton(),
+                                  const Spacer(),
+                                  Text(
+                                    started ? 'ROUND ${spot.round + 1} OF $_rounds' : _p.rhythm,
+                                    style: capsStyle(color: Colors.white.withValues(alpha: 0.85), size: 10.5),
                                   ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 86,
+                              child: CardHero(
+                                tag: widget.heroTag,
+                                face: CardFace(
+                                  style: _p.style,
+                                  borderRadius: 24,
+                                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                                  contentAlignment: Alignment.centerLeft,
+                                  child: _Header(pattern: _p, remaining: _clock(remaining)),
                                 ),
                               ),
-                              _Readout(
-                                title: _done
-                                    ? 'Complete'
-                                    : _count != null
-                                        ? 'Get ready'
-                                        : !started
-                                            ? 'Ready'
-                                            : running
-                                                ? phase.title
-                                                : 'Paused',
-                                number: _done
-                                    ? '✓'
-                                    : _count != null
-                                        ? '$_count'
-                                        : started
-                                            ? '${spot.left.ceil()}'
-                                            : _clock(_p.duration.inSeconds.toDouble()),
-                                small: !started && _count == null && !_done,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          height: 52,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 450),
-                            child: Text(
-                              _done
-                                  ? 'Notice how you feel now.'
-                                  : started
-                                      ? phase.cue
-                                      : _p.why,
-                              key: ValueKey(_done
-                                  ? 'done'
-                                  : started
-                                      ? '${spot.round}-${spot.phase}'
-                                      : 'why'),
-                              textAlign: TextAlign.center,
-                              maxLines: 3,
-                              style: started && !_done
-                                  ? const TextStyle(
-                                      fontFamily: 'CormorantGaramond',
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 21,
-                                      color: AppTheme.textPrimary,
-                                    )
-                                  : mutedStyle.copyWith(fontSize: 12.5, height: 1.4),
                             ),
-                          ),
-                        ),
-                        const Spacer(),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          switchInCurve: Curves.easeOutCubic,
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: anim,
-                            child: SlideTransition(
-                              position: Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(anim),
-                              child: child,
-                            ),
-                          ),
-                          child: _done
-                              ? _CompletionCard(
-                                  key: const ValueKey('done'),
-                                  pattern: _p,
-                                  onAgain: _restart,
-                                )
-                              : Column(
-                                  key: const ValueKey('controls'),
-                                  children: [
-                                    DeckItem(
-                                      index: 1,
-                                      child: _Timeline(
+                            const Spacer(),
+                            SizedBox.square(
+                              dimension: visual,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: BreathVisualPainter(
+                                        shape: _p.shape,
                                         phases: _p.phases,
-                                        current: started ? spot.phase : -1,
-                                        t: spot.t,
-                                        glow: glow,
+                                        phase: spot.phase,
+                                        t: started ? spot.t : 0,
+                                        level: level,
+                                        color: color,
+                                        active: started && !_done,
                                       ),
                                     ),
-                                    const SizedBox(height: 22),
-                                    DeckItem(
-                                      index: 2,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          GlassIconButton(
-                                            icon: Icons.refresh_rounded,
-                                            size: 54,
-                                            semanticLabel: 'Restart',
-                                            onTap: _restart,
-                                          ),
-                                          const SizedBox(width: 26),
-                                          _StartButton(
-                                            running: running || _count != null,
-                                            glow: glow,
-                                            label: started ? null : 'Begin',
-                                            onTap: _toggle,
-                                          ),
-                                          const SizedBox(width: 80),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                  ),
+                                  _Readout(
+                                    eyebrow: _done
+                                        ? 'COMPLETE'
+                                        : _count != null
+                                            ? 'GET READY'
+                                            : !started
+                                                ? 'READY'
+                                                : running
+                                                    ? null
+                                                    : 'PAUSED',
+                                    word: started && !_done && _count == null ? _p.phases[spot.phase].title : null,
+                                    number: _done
+                                        ? _clock(_length.inSeconds.toDouble())
+                                        : _count != null
+                                            ? '$_count'
+                                            : started
+                                                ? '${spot.left.ceil()}'
+                                                : _clock(_length.inSeconds.toDouble()),
+                                    large: _count != null || (started && !_done),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              height: 54,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 450),
+                                child: Text(
+                                  _done
+                                      ? 'Notice how you feel now.'
+                                      : started
+                                          ? _p.phases[spot.phase].cue
+                                          : _p.why,
+                                  key: ValueKey(_done
+                                      ? 'done'
+                                      : started
+                                          ? '${spot.round}-${spot.phase}'
+                                          : 'why'),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 3,
+                                  style: started && !_done
+                                      ? const TextStyle(
+                                          fontFamily: 'CormorantGaramond',
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 22,
+                                          height: 1.15,
+                                          color: AppTheme.textPrimary,
+                                        )
+                                      : mutedStyle.copyWith(fontSize: 12.5, height: 1.45),
                                 ),
+                              ),
+                            ),
+                            const Spacer(),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              switchInCurve: Curves.easeOutCubic,
+                              transitionBuilder: (child, anim) => FadeTransition(
+                                opacity: anim,
+                                child: SlideTransition(
+                                  position: Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(anim),
+                                  child: child,
+                                ),
+                              ),
+                              child: _done
+                                  ? _CompletionCard(
+                                      key: const ValueKey('done'),
+                                      pattern: _p,
+                                      rounds: _rounds,
+                                      seconds: _length.inSeconds,
+                                      onAgain: _restart,
+                                    )
+                                  : Column(
+                                      key: const ValueKey('controls'),
+                                      children: [
+                                        DeckItem(
+                                          index: 1,
+                                          child: PhaseStrip(
+                                            phases: _p.phases,
+                                            color: color,
+                                            current: started ? spot.phase : -1,
+                                            t: spot.t,
+                                            large: true,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        SizedBox(
+                                          height: 36,
+                                          child: started || _count != null
+                                              ? _RoundDots(total: _rounds, current: spot.round, color: color)
+                                              : _RoundsStepper(rounds: _rounds, onChanged: _setRounds),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        DeckItem(
+                                          index: 2,
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              GlassIconButton(
+                                                icon: Icons.refresh_rounded,
+                                                size: 52,
+                                                semanticLabel: 'Restart',
+                                                onTap: _restart,
+                                              ),
+                                              const SizedBox(width: 28),
+                                              _StartButton(
+                                                running: running || _count != null,
+                                                started: started,
+                                                color: color,
+                                                onTap: _toggle,
+                                              ),
+                                              const SizedBox(width: 80),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ],
                         ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
         ),
       ),
@@ -321,8 +354,8 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
   }
 }
 
-class _HeaderContent extends StatelessWidget {
-  const _HeaderContent({required this.pattern, required this.remaining});
+class _Header extends StatelessWidget {
+  const _Header({required this.pattern, required this.remaining});
 
   final BreathPattern pattern;
   final String remaining;
@@ -336,69 +369,96 @@ class _HeaderContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(pattern.rhythm, style: capsStyle(color: pattern.style.muted, size: 10.5)),
-              const SizedBox(height: 4),
+              Text(
+                'BEST FOR ${pattern.bestFor}',
+                style: capsStyle(color: Color.lerp(pattern.color, Colors.white, 0.35)!, size: 9.5),
+              ),
+              const SizedBox(height: 5),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
                   pattern.name,
                   maxLines: 1,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'CormorantGaramond',
                     fontWeight: FontWeight.w600,
-                    fontSize: 28,
+                    fontSize: 26,
                     height: 1,
-                    color: pattern.style.foreground,
-                    shadows: textOnArt,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        Text(
-          remaining,
-          style: TextStyle(
-            fontFamily: 'CormorantGaramond',
-            fontWeight: FontWeight.w600,
-            fontSize: 30,
-            color: pattern.style.foreground,
-            shadows: textOnArt,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              remaining,
+              style: const TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.w600,
+                fontSize: 28,
+                height: 1,
+                color: Colors.white,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('REMAINING', style: capsStyle(color: Colors.white.withValues(alpha: 0.6), size: 8)),
+          ],
         ),
       ],
     );
   }
 }
 
+/// The centre of the shape: a small eyebrow or the phase word, and a big
+/// number (countdown, count-in or session length).
 class _Readout extends StatelessWidget {
-  const _Readout({required this.title, required this.number, this.small = false});
+  const _Readout({required this.number, this.eyebrow, this.word, this.large = false});
 
-  final String title;
+  final String? eyebrow;
+  final String? word;
   final String number;
-  final bool small;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
+    const shadow = [Shadow(color: Color(0x99000000), blurRadius: 16)];
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Text(
-            title.toUpperCase(),
-            key: ValueKey(title),
-            style: capsStyle(color: Colors.white, size: 12),
-          ),
+          duration: const Duration(milliseconds: 260),
+          child: word != null
+              ? Text(
+                  word!,
+                  key: ValueKey('w$word'),
+                  style: const TextStyle(
+                    fontFamily: 'CormorantGaramond',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 26,
+                    height: 1,
+                    color: Colors.white,
+                    shadows: shadow,
+                  ),
+                )
+              : Text(
+                  eyebrow ?? '',
+                  key: ValueKey('e$eyebrow'),
+                  style: capsStyle(color: Colors.white.withValues(alpha: 0.85), size: 10.5).copyWith(shadows: shadow),
+                ),
         ),
         const SizedBox(height: 4),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
+          duration: const Duration(milliseconds: 200),
           transitionBuilder: (child, anim) => FadeTransition(
             opacity: anim,
-            child: ScaleTransition(scale: Tween(begin: 0.85, end: 1.0).animate(anim), child: child),
+            child: ScaleTransition(scale: Tween(begin: 0.86, end: 1.0).animate(anim), child: child),
           ),
           child: Text(
             number,
@@ -406,10 +466,10 @@ class _Readout extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'CormorantGaramond',
               fontWeight: FontWeight.w500,
-              fontSize: small ? 40 : 72,
+              fontSize: large ? 76 : 46,
               height: 1,
               color: Colors.white,
-              shadows: const [Shadow(color: Color(0x88000000), blurRadius: 18)],
+              shadows: shadow,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -419,266 +479,113 @@ class _Readout extends StatelessWidget {
   }
 }
 
-/// The breath made visible: a dot tracing a box, or an orb that fills
-/// and empties with the lungs, inside a ring showing the whole cycle.
-class _BreathPainter extends CustomPainter {
-  const _BreathPainter({
-    required this.shape,
-    required this.phases,
-    required this.phase,
-    required this.t,
-    required this.level,
-    required this.glow,
-  });
+class _RoundsStepper extends StatelessWidget {
+  const _RoundsStepper({required this.rounds, required this.onChanged});
 
-  final BreathShape shape;
-  final List<BreathPhase> phases;
-  final int phase;
-  final double t;
-  final double level;
-  final Color glow;
+  final int rounds;
+  final ValueChanged<int> onChanged;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final r = size.shortestSide / 2;
-    if (shape == BreathShape.box && phases.length == 4) {
-      _box(canvas, c, r);
-    } else {
-      _orb(canvas, c, r);
-    }
-  }
-
-  void _glow(Canvas canvas, Offset at, double radius, Color color, double alpha) {
-    canvas.drawCircle(
-      at,
-      radius,
-      Paint()
-        ..shader = RadialGradient(colors: [color.withValues(alpha: alpha), color.withValues(alpha: 0)])
-            .createShader(Rect.fromCircle(center: at, radius: radius)),
-    );
-  }
-
-  void _orb(Canvas canvas, Offset c, double r) {
-    final ring = r - 6;
-    final total = phases.fold<double>(0, (s, p) => s + p.seconds);
-    var start = -math.pi / 2;
-    for (var i = 0; i < phases.length; i++) {
-      final sweep = 2 * math.pi * phases[i].seconds / total;
-      const gap = 0.05;
-      final rect = Rect.fromCircle(center: c, radius: ring);
-      canvas.drawArc(
-        rect,
-        start + gap / 2,
-        sweep - gap,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
-          ..strokeCap = StrokeCap.round
-          ..color = Colors.white.withValues(alpha: i < phase ? 0.35 : 0.1),
-      );
-      if (i == phase && t > 0) {
-        canvas.drawArc(
-          rect,
-          start + gap / 2,
-          (sweep - gap) * t,
-          false,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 3.4
-            ..strokeCap = StrokeCap.round
-            ..color = Color.lerp(glow, Colors.white, 0.35)!,
+  Widget build(BuildContext context) {
+    Widget step(IconData icon, int delta, String label) => Semantics(
+          button: true,
+          label: label,
+          child: GestureDetector(
+            onTap: () => onChanged(rounds + delta),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+              ),
+              child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.85)),
+            ),
+          ),
         );
-        final head = start + gap / 2 + (sweep - gap) * t;
-        final hp = c + Offset(math.cos(head), math.sin(head)) * ring;
-        _glow(canvas, hp, 14, Colors.white, 0.8);
-      }
-      start += sweep;
-    }
-
-    final orb = ring * (0.36 + 0.5 * level);
-    _glow(canvas, c, orb * 1.7, glow, 0.32 + 0.2 * level);
-    canvas.drawCircle(
-      c,
-      orb,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.3, -0.35),
-          colors: [
-            Colors.white.withValues(alpha: 0.85),
-            Color.lerp(glow, Colors.white, 0.3)!,
-            glow.withValues(alpha: 0.85),
-            Color.lerp(glow, Colors.black, 0.35)!,
-          ],
-          stops: const [0, 0.25, 0.7, 1],
-        ).createShader(Rect.fromCircle(center: c, radius: orb)),
-    );
-    canvas.drawCircle(
-      c,
-      orb,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = Colors.white.withValues(alpha: 0.35),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        step(Icons.remove_rounded, -1, 'Fewer rounds'),
+        SizedBox(
+          width: 130,
+          child: Text(
+            '$rounds ROUNDS',
+            key: const Key('rounds'),
+            textAlign: TextAlign.center,
+            style: capsStyle(color: Colors.white, size: 11),
+          ),
+        ),
+        step(Icons.add_rounded, 1, 'More rounds'),
+      ],
     );
   }
-
-  void _box(Canvas canvas, Offset c, double r) {
-    final half = r * 0.72;
-    final rect = Rect.fromCenter(center: c, width: half * 2, height: half * 2);
-    final corners = [rect.bottomLeft, rect.topLeft, rect.topRight, rect.bottomRight];
-
-    // Inner breath field.
-    final inner = half * (0.4 + 0.55 * level);
-    _glow(canvas, c, inner * 1.6, glow, 0.3 + 0.2 * level);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromCenter(center: c, width: inner * 2, height: inner * 2), Radius.circular(inner * 0.28)),
-      Paint()
-        ..shader = RadialGradient(
-          colors: [Colors.white.withValues(alpha: 0.5), glow.withValues(alpha: 0.55), glow.withValues(alpha: 0.12)],
-          stops: const [0, 0.55, 1],
-        ).createShader(Rect.fromCircle(center: c, radius: inner * 1.4)),
-    );
-
-    // Track, completed sides, and the side being travelled now.
-    final track = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 4; i++) {
-      final a = corners[i], b = corners[(i + 1) % 4];
-      track.color = Colors.white.withValues(alpha: i < phase ? 0.45 : 0.12);
-      canvas.drawLine(a, b, track);
-    }
-    final a = corners[phase], b = corners[(phase + 1) % 4];
-    final head = Offset.lerp(a, b, t)!;
-    canvas.drawLine(
-      a,
-      head,
-      track
-        ..strokeWidth = 3.6
-        ..color = Color.lerp(glow, Colors.white, 0.35)!,
-    );
-    for (final corner in corners) {
-      canvas.drawCircle(corner, 3, Paint()..color = Colors.white.withValues(alpha: 0.5));
-    }
-    _glow(canvas, head, 22, glow, 0.9);
-    canvas.drawCircle(head, 6.5, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(_BreathPainter old) => old.phase != phase || old.t != t || old.level != level || old.glow != glow;
 }
 
-/// The pattern as chips; the live phase fills as it runs.
-class _Timeline extends StatelessWidget {
-  const _Timeline({required this.phases, required this.current, required this.t, required this.glow});
+class _RoundDots extends StatelessWidget {
+  const _RoundDots({required this.total, required this.current, required this.color});
 
-  final List<BreathPhase> phases;
+  final int total;
   final int current;
-  final double t;
-  final Color glow;
-
-  static String _secs(double s) => s == s.roundToDouble() ? '${s.round()}s' : '${s}s';
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        for (var i = 0; i < phases.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              height: 56,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: i == current ? glow.withValues(alpha: 0.16) : Colors.white.withValues(alpha: 0.05),
-                border: Border.all(
-                  color: i == current ? glow.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Stack(
-                children: [
-                  if (i == current)
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: t,
-                        child: Container(height: 3, color: Color.lerp(glow, Colors.white, 0.3)),
-                      ),
-                    ),
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            phases[i].title.toUpperCase(),
-                            maxLines: 1,
-                            style: capsStyle(
-                              color: i == current ? Colors.white : AppTheme.textMuted,
-                              size: 9,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _secs(phases[i].seconds),
-                          style: TextStyle(
-                            fontFamily: 'CormorantGaramond',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 19,
-                            height: 1,
-                            color: i == current ? Colors.white : AppTheme.textPrimary.withValues(alpha: 0.75),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        for (var i = 0; i < total; i++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: i == current ? 18 : 7,
+            height: 7,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: i < current
+                  ? color.withValues(alpha: 0.8)
+                  : i == current
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.16),
             ),
           ),
-        ],
       ],
     );
   }
 }
 
 class _StartButton extends StatelessWidget {
-  const _StartButton({required this.running, required this.glow, required this.onTap, this.label});
+  const _StartButton({required this.running, required this.started, required this.color, required this.onTap});
 
   final bool running;
-  final Color glow;
+  final bool started;
+  final Color color;
   final VoidCallback onTap;
-  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final ink = Color.lerp(color, Colors.black, 0.65)!;
     return Semantics(
       button: true,
-      label: running ? 'Pause' : (label ?? 'Resume'),
+      label: running ? 'Pause' : (started ? 'Resume' : 'Begin'),
       child: GestureDetector(
         key: const Key('play'),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width: 80,
-          height: 80,
+          width: 82,
+          height: 82,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              begin: Alignment.bottomLeft,
-              end: Alignment.topRight,
-              colors: [Color.lerp(glow, Colors.black, 0.45)!, Color.lerp(glow, Colors.white, 0.15)!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, Color.lerp(color, Colors.white, 0.55)!],
             ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
-            boxShadow: [BoxShadow(color: glow.withValues(alpha: running ? 0.55 : 0.3), blurRadius: running ? 36 : 20)],
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: running ? 0.6 : 0.35), blurRadius: running ? 38 : 24),
+            ],
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 240),
@@ -686,7 +593,7 @@ class _StartButton extends StatelessWidget {
             child: Icon(
               running ? Icons.pause_rounded : Icons.play_arrow_rounded,
               key: ValueKey(running),
-              color: Colors.white,
+              color: ink,
               size: 40,
             ),
           ),
@@ -697,30 +604,46 @@ class _StartButton extends StatelessWidget {
 }
 
 class _CompletionCard extends ConsumerWidget {
-  const _CompletionCard({super.key, required this.pattern, required this.onAgain});
+  const _CompletionCard({
+    super.key,
+    required this.pattern,
+    required this.rounds,
+    required this.seconds,
+    required this.onAgain,
+  });
 
   final BreathPattern pattern;
+  final int rounds;
+  final int seconds;
   final VoidCallback onAgain;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final streak = ref.watch(practiceProvider.select((s) => s.streak));
-    final minutes = (pattern.duration.inSeconds / 60).toStringAsFixed(pattern.duration.inSeconds % 60 == 0 ? 0 : 1);
+    Widget stat(String value, String label) => Expanded(
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 28,
+                  height: 1,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(label, style: capsStyle(color: Colors.white.withValues(alpha: 0.65), size: 8.5)),
+            ],
+          ),
+        );
     return CardFace(
       style: pattern.style,
       borderRadius: 26,
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.local_fire_department_rounded, color: AppTheme.amber, size: 18),
-              const SizedBox(width: 6),
-              Text('DAY $streak STREAK', style: capsStyle(color: Colors.white, size: 10.5)),
-            ],
-          ),
-          const SizedBox(height: 10),
           const Text(
             'Beautifully done.',
             style: TextStyle(
@@ -729,26 +652,24 @@ class _CompletionCard extends ConsumerWidget {
               fontSize: 30,
               height: 1,
               color: Colors.white,
-              shadows: textOnArt,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '$minutes min of ${pattern.name.toLowerCase()} · ${pattern.rounds} rounds',
-            style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
-              fontSize: 12.5,
-              color: Colors.white.withValues(alpha: 0.85),
-              shadows: textOnArt,
             ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              _Pill(label: 'Again', onTap: onAgain),
+              stat((seconds / 60).toStringAsFixed(seconds % 60 == 0 ? 0 : 1), 'MINUTES'),
+              stat('$rounds', 'ROUNDS'),
+              stat('$streak', 'DAY STREAK'),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(child: _Pill(label: 'Again', onTap: onAgain)),
               const SizedBox(width: 10),
-              _Pill(label: 'Done', filled: true, onTap: () => Navigator.of(context).maybePop()),
+              Expanded(
+                child: _Pill(label: 'Done', filled: true, onTap: () => Navigator.of(context).maybePop()),
+              ),
             ],
           ),
         ],
@@ -772,18 +693,19 @@ class _Pill extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: filled ? Colors.white : Colors.white.withValues(alpha: 0.14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
+            color: filled ? Colors.white : Colors.white.withValues(alpha: 0.12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.8),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontFamily: 'Quicksand',
               fontWeight: FontWeight.w700,
-              fontSize: 13.5,
+              fontSize: 14,
               color: filled ? AppTheme.bgTop : Colors.white,
             ),
           ),
