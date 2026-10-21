@@ -1,122 +1,119 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/app_theme.dart';
-import 'gloss.dart';
+import '../theme/card_styles.dart';
+import 'card_face.dart';
+import 'deck.dart';
 
-/// A pressable gradient card with a glassy finish: it scales down on
-/// touch (iOS-like feel), a sheen sweeps across every few seconds, and
-/// it flies seamlessly into the next screen via Hero.
+/// A pressable card: it sinks on touch (iOS-like), a gloss sweep passes
+/// over it every few seconds, and — given a [heroTag] — it morphs
+/// seamlessly into the next screen while the rest of the deck slides away.
 class GlowCard extends StatefulWidget {
   const GlowCard({
     super.key,
-    required this.child,
+    required this.style,
     required this.onTap,
-    this.gradientColors,
+    required this.child,
     this.heroTag,
-    this.borderRadius = 28,
-    this.padding = const EdgeInsets.all(20),
-    this.glowColor,
+    this.height,
+    this.borderRadius = 26,
+    this.padding = const EdgeInsets.all(18),
     this.sheenEnabled = true,
+    this.contentAlignment = Alignment.bottomLeft,
+    this.semanticLabel,
   });
 
-  final Widget child;
+  final CardStyle style;
   final VoidCallback onTap;
-  final List<Color>? gradientColors;
-  final String? heroTag;
+  final Widget child;
+  final Object? heroTag;
+  final double? height;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
-  final Color? glowColor;
   final bool sheenEnabled;
+  final Alignment contentAlignment;
+  final String? semanticLabel;
 
   @override
   State<GlowCard> createState() => _GlowCardState();
 }
 
-class _GlowCardState extends State<GlowCard>
-    with TickerProviderStateMixin {
+class _GlowCardState extends State<GlowCard> with TickerProviderStateMixin {
   late final AnimationController _press = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 120),
-    reverseDuration: const Duration(milliseconds: 260),
+    duration: const Duration(milliseconds: 110),
+    reverseDuration: const Duration(milliseconds: 280),
   );
 
-  /// Slow loop driving the glossy sheen sweep.
+  /// One gloss sweep. It only runs during a sweep (every ~7 s, offset per
+  /// card so the deck doesn't flash in unison), so idle cards cost nothing.
   late final AnimationController _sheen = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 6),
+    duration: const Duration(milliseconds: 1300),
   );
+  Timer? _sheenTimer;
 
   @override
   void initState() {
     super.initState();
-    if (widget.sheenEnabled) _sheen.repeat();
+    if (widget.sheenEnabled) {
+      final offset = 1200 + ((widget.heroTag ?? widget.semanticLabel).hashCode % 4000);
+      _sheenTimer = Timer(Duration(milliseconds: offset), () {
+        _sweep();
+        _sheenTimer = Timer.periodic(const Duration(seconds: 7), (_) => _sweep());
+      });
+    }
   }
+
+  void _sweep() => _sheen.forward(from: 0);
 
   @override
   void dispose() {
+    _sheenTimer?.cancel();
     _press.dispose();
     _sheen.dispose();
     super.dispose();
   }
 
+  void _handleTap() {
+    // Ignore taps while a transition is running (no double pushes).
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    DeckItem.markActive(context);
+    HapticFeedback.lightImpact();
+    widget.onTap();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final card = AnimatedBuilder(
-      animation: Listenable.merge([_press, _sheen]),
-      builder: (context, child) {
-        final scale = 1 - 0.045 * Curves.easeOut.transform(_press.value);
-        // Band travels from -0.2 to 1.2 over the loop; painter hides
-        // it outside (0, 1) so the card rests between sweeps.
-        final sheenPos = widget.sheenEnabled ? _sheen.value * 1.4 - 0.2 : -1.0;
-        return Transform.scale(
-          scale: scale,
-          child: GlossOverlay(
-            borderRadius: widget.borderRadius,
-            sheen: sheenPos,
-            child: child!,
-          ),
-        );
-      },
+    final face = CardFace(
+      style: widget.style,
+      borderRadius: widget.borderRadius,
+      padding: widget.padding,
+      sheen: widget.sheenEnabled ? _sheen : null,
+      contentAlignment: widget.contentAlignment,
+      child: widget.child,
+    );
+    final body = widget.heroTag == null ? face : CardHero(tag: widget.heroTag!, face: face);
+
+    return Semantics(
+      button: true,
+      label: widget.semanticLabel,
       child: GestureDetector(
         onTapDown: (_) => _press.forward(),
         onTapUp: (_) => _press.reverse(),
         onTapCancel: () => _press.reverse(),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onTap();
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: widget.gradientColors == null
-                ? null
-                : LinearGradient(
-                    colors: widget.gradientColors!,
-                    // Dark end anchors the text corner (bottom-left),
-                    // light end sits at the top-right like a light source.
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                  ),
-            color: widget.gradientColors == null ? AppTheme.surface : null,
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: (widget.glowColor ?? AppTheme.violet)
-                    .withValues(alpha: 0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
+        onTap: _handleTap,
+        child: AnimatedBuilder(
+          animation: _press,
+          builder: (context, child) => Transform.scale(
+            scale: 1 - 0.04 * Curves.easeOut.transform(_press.value),
+            child: child,
           ),
-          padding: widget.padding,
-          child: widget.child,
+          child: SizedBox(height: widget.height, child: body),
         ),
       ),
     );
-
-    if (widget.heroTag != null) {
-      return Hero(tag: widget.heroTag!, child: card);
-    }
-    return card;
   }
 }

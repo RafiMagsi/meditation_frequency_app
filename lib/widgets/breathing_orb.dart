@@ -13,12 +13,17 @@ class BreathingOrb extends StatefulWidget {
     this.color = AppTheme.violet,
     this.glow = const Color(0xFFB6A8FF),
     this.breathing = true,
+    this.breath,
   });
 
   final double size;
   final Color color;
   final Color glow;
   final bool breathing;
+
+  /// External 0→1→0 breath to follow (e.g. the player's breath guide);
+  /// falls back to the orb's own 4 s cycle.
+  final Animation<double>? breath;
 
   @override
   State<BreathingOrb> createState() => _BreathingOrbState();
@@ -41,9 +46,9 @@ class _BreathingOrbState extends State<BreathingOrb>
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: Listenable.merge([_controller, widget.breath]),
         builder: (context, _) {
-          final pulse = Curves.easeInOut.transform(_controller.value);
+          final pulse = Curves.easeInOut.transform(widget.breath?.value ?? _controller.value);
           return CustomPaint(
             size: Size.square(widget.size),
             painter: _OrbPainter(

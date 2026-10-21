@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/card_styles.dart';
+import '../widgets/feature_scaffold.dart';
 
 /// Aura meter: a living sound-field visualizer. The aura breathes with
 /// a smooth simulated level — perfect camera material for the demo.
@@ -30,88 +32,71 @@ class _FrequencyMeterScreenState extends State<FrequencyMeterScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.bgTop,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF181040), Color(0xFF0A0E27)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
+    return FeatureScaffold(
+      accent: AppTheme.violet,
+      header: const FeatureHeader(
+        heroTag: 'card-meter',
+        style: CardStyles.meter,
+        height: 124,
+        title: 'Aura Meter',
+        subtitle: 'Visualize your sound field',
+      ),
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          // Smooth random-walk level for an organic "live" feel.
+          final t = _controller.value;
+          final target = 0.5 + 0.42 * math.sin(t * 2 * math.pi * 1.7) * math.cos(t * 2 * math.pi * 0.6);
+          _level += (target - _level) * 0.08;
+          return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              Expanded(
+                child: CustomPaint(
+                  size: Size.infinite,
+                  painter: _AuraPainter(t: t, level: _level),
+                ),
+              ),
+              GlassPanel(
+                accent: AppTheme.violet,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      key: const Key('back'),
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.08),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                        ),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 18, color: Colors.white70),
+                    Text(
+                      '${(_level * 100).round()}%',
+                      style: const TextStyle(
+                        fontFamily: 'CormorantGaramond',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 34,
+                        height: 1,
+                        color: AppTheme.textPrimary,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('RESONANCE', style: capsStyle(size: 10)),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: LinearProgressIndicator(
+                              value: _level.clamp(0.0, 1.0),
+                              minHeight: 5,
+                              backgroundColor: Colors.white.withValues(alpha: 0.08),
+                              valueColor: AlwaysStoppedAnimation(Color.lerp(AppTheme.violet, AppTheme.pink, _level)!),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
-              const Text(
-                'Aura Meter',
-                style: TextStyle(
-                  fontFamily: 'CormorantGaramond',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 36,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text('Visualize your sound field', style: mutedStyle.copyWith(fontSize: 13)),
-              const Spacer(),
-              Expanded(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, _) {
-                    // Smooth random-walk level for a organic "live" feel.
-                    final t = _controller.value;
-                    final target =
-                        0.5 + 0.42 * math.sin(t * 2 * math.pi * 1.7) * math.cos(t * 2 * math.pi * 0.6);
-                    _level += (target - _level) * 0.08;
-                    return CustomPaint(
-                      size: Size.infinite,
-                      painter: _AuraPainter(
-                        t: t,
-                        level: _level,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${(_level * 100).round()}% resonance',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: AppTheme.violet.withValues(alpha: 
-                      0.6 + 0.4 * _level),
-                ),
-              ),
-              const Spacer(),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -137,8 +122,7 @@ class _AuraPainter extends CustomPainter {
       paint
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.6
-        ..color = Color.lerp(AppTheme.violet, AppTheme.pink, i / 5)!
-            .withValues(alpha: opacity);
+        ..color = Color.lerp(AppTheme.violet, AppTheme.pink, i / 5)!.withValues(alpha: opacity);
       canvas.drawCircle(center, radius, paint);
     }
 
@@ -161,7 +145,7 @@ class _AuraPainter extends CustomPainter {
     final sparklePaint = Paint()..color = Colors.white;
     for (var i = 0; i < 8; i++) {
       final a = (t * 2 * math.pi) + i * (math.pi / 4);
-      final r = base * (0.9 + 0.25 * math.sin(t * 6 + i));
+      final r = base * (0.9 + 0.25 * math.sin(t * 2 * math.pi + i));
       final pos = center + Offset(math.cos(a), math.sin(a)) * r;
       sparklePaint.color = Colors.white.withValues(alpha: 0.15 + 0.5 * level * ((i % 3) / 3));
       canvas.drawCircle(pos, 1.6 + 1.4 * ((i % 2).toDouble()), sparklePaint);

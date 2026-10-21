@@ -1,16 +1,22 @@
-import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 
+import '../services/tone_playback.dart';
 import '../theme/app_theme.dart';
+import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breathing_orb.dart';
-import '../widgets/waveform.dart';
+import '../widgets/card_face.dart';
+import '../widgets/deck.dart';
+import '../widgets/glass_button.dart';
+import '../widgets/luxury.dart';
+import '../widgets/player_kit.dart';
 
-/// Immersive full-screen player. Plays the real bundled tone; if audio
-/// fails on a platform it falls back to a simulated timeline so the
-/// demo never breaks.
+/// The private-collection player: onyx, champagne gold and a watch-dial
+/// bezel around the "jewel" — the tone orb, or the session artwork that
+/// morphed in from its card. A coherent-breathing guide (5 s in, 5 s out)
+/// paces the jewel and the cue beneath the title.
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({
     super.key,
@@ -20,272 +26,251 @@ class PlayerScreen extends StatefulWidget {
     required this.color,
     required this.glow,
     required this.heroTag,
-    this.icon = Icons.waves_rounded,
+    this.scene,
   });
 
   final String title;
+
+  /// Shown as the gold caps line, e.g. "Transform · Root chakra".
   final String subtitle;
   final String audioPath;
   final Color color;
   final Color glow;
   final String heroTag;
-  final IconData icon;
+
+  /// Session artwork for the jewel; the tone orb is used when null.
+  final Scene? scene;
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends State<PlayerScreen> {
-  AudioPlayer? _player;
-  bool _playing = false;
-  bool _loop = true;
-  Duration _position = Duration.zero;
-  Duration _duration = const Duration(seconds: 48);
-  Timer? _simulated;
+class _PlayerScreenState extends State<PlayerScreen> with TickerProviderStateMixin {
+  late final TonePlayback _playback = TonePlayback(widget.audioPath)..init();
+
+  /// Coherent breathing: 5 s in, 5 s out — six breaths a minute.
+  late final AnimationController _breath = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 5),
+  )..repeat(reverse: true);
+
+  /// Slow turn of the engraving and the play ring while playing.
+  late final AnimationController _turn = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 60),
+  );
+
+  bool _favourite = false;
 
   @override
   void initState() {
     super.initState();
-    _initAudio();
+    _playback.addListener(_syncTurn);
   }
 
-  Future<void> _initAudio() async {
-    try {
-      final player = AudioPlayer();
-      final duration = await player.setAsset(widget.audioPath);
-      await player.setLoopMode(LoopMode.all);
-      player.positionStream.listen((pos) {
-        if (mounted) setState(() => _position = pos);
-      });
-      player.playerStateStream.listen((state) {
-        if (mounted) setState(() => _playing = state.playing);
-      });
-      _player = player;
-      if (duration != null && mounted) setState(() => _duration = duration);
-    } catch (_) {
-      // Audio unavailable here — drive a simulated timeline instead.
-      _startSimulated();
+  void _syncTurn() {
+    if (_playback.playing && !_turn.isAnimating) {
+      _turn.repeat();
+    } else if (!_playback.playing && _turn.isAnimating) {
+      _turn.stop();
     }
-  }
-
-  void _startSimulated() {
-    _simulated?.cancel();
-    _simulated = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (!mounted || !_playing) return;
-      setState(() {
-        _position += const Duration(milliseconds: 500);
-        if (_position > _duration) {
-          _position = _loop ? Duration.zero : _duration;
-          if (!_loop) _playing = false;
-        }
-      });
-    });
-  }
-
-  Future<void> _toggle() async {
-    final player = _player;
-    if (player != null) {
-      if (player.playing) {
-        await player.pause();
-      } else {
-        await player.play();
-      }
-      if (mounted) setState(() => _playing = player.playing);
-    } else {
-      setState(() => _playing = !_playing);
-    }
-  }
-
-  Future<void> _seek(double fraction) async {
-    final target = _duration * fraction;
-    await _player?.seek(target);
-    if (mounted) setState(() => _position = target);
   }
 
   @override
   void dispose() {
-    _simulated?.cancel();
-    _player?.dispose();
+    _playback
+      ..removeListener(_syncTurn)
+      ..dispose();
+    _breath.dispose();
+    _turn.dispose();
     super.dispose();
   }
 
-  String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final fraction =
-        _duration.inMilliseconds == 0 ? 0.0 : (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0);
-    return Scaffold(
-      backgroundColor: AppTheme.bgTop,
-      body: AmbientBackground(
-        colors: const [Color(0xFF0A0E27), Color(0xFF14102E), Color(0xFF1D1240)],
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  children: [
-                    _GlassButton(
-                      icon: Icons.keyboard_arrow_down_rounded,
-                      onTap: () => Navigator.of(context).maybePop(),
-                    ),
-                    const Spacer(),
-                    Text('NOW PLAYING',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                          letterSpacing: 3,
-                          color: AppTheme.textMuted.withValues(alpha: 0.9),
-                        )),
-                    const Spacer(),
-                    _GlassButton(
-                      icon: Icons.loop_rounded,
-                      active: _loop,
-                      onTap: () => setState(() => _loop = !_loop),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              // The orb is the hero that flew in from the tapped card.
-              Hero(
-                tag: widget.heroTag,
-                child: BreathingOrb(
-                  size: 250,
-                  color: widget.color,
-                  glow: widget.glow,
-                  breathing: _playing,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Text(
-                '${widget.title} · ${widget.subtitle}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 30,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Waveform(color: widget.glow, active: _playing),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 4,
-                    activeTrackColor: widget.color,
-                    inactiveTrackColor: Colors.white.withValues(alpha: 0.12),
-                    thumbColor: widget.glow,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                    overlayShape: SliderComponentShape.noOverlay,
-                  ),
-                  child: Slider(
-                    value: fraction,
-                    onChanged: _seek,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 34),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(_fmt(_position), style: mutedStyle.copyWith(fontSize: 12)),
-                    Text(_fmt(_duration), style: mutedStyle.copyWith(fontSize: 12)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _GlassButton(
-                    icon: Icons.replay_rounded,
-                    onTap: () => _seek(0),
-                  ),
-                  const SizedBox(width: 26),
-                  // Play/pause morph button.
-                  GestureDetector(
-                    onTap: _toggle,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 78,
-                      height: 78,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [widget.color, widget.glow],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: widget.color.withValues(alpha: _playing ? 0.55 : 0.3),
-                            blurRadius: _playing ? 38 : 22,
-                            spreadRadius: _playing ? 4 : 0,
-                          ),
-                        ],
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 260),
-                        transitionBuilder: (child, anim) => ScaleTransition(
-                          scale: anim,
-                          child: FadeTransition(opacity: anim, child: child),
-                        ),
-                        child: Icon(
-                          _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                          key: ValueKey(_playing),
-                          color: Colors.white,
-                          size: 42,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 26),
-                  _GlassButton(
-                    icon: Icons.fast_forward_rounded,
-                    onTap: () => _seek((fraction + 0.2).clamp(0.0, 1.0)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 34),
-            ],
+  Widget _jewel(double size) {
+    final scene = widget.scene;
+    if (scene != null) {
+      return SizedBox.square(
+        dimension: size,
+        child: CardHero(
+          tag: widget.heroTag,
+          face: CardFace(
+            style: CardStyles.session(scene),
+            borderRadius: size / 2,
+            padding: EdgeInsets.zero,
+            scrim: 0,
+            elevation: 0.9,
           ),
         ),
+      );
+    }
+    return Hero(
+      tag: widget.heroTag,
+      child: BreathingOrb(
+        size: size * 1.25,
+        color: widget.color,
+        glow: widget.glow,
+        breathing: _playback.playing,
+        breath: _breath,
       ),
     );
   }
-}
-
-class _GlassButton extends StatelessWidget {
-  const _GlassButton({required this.icon, required this.onTap, this.active = false});
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool active;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-        ),
-        child: Icon(
-          icon,
-          size: 22,
-          color: active ? AppTheme.teal : Colors.white70,
+    return Scaffold(
+      backgroundColor: AppTheme.onyx,
+      body: AmbientBackground(
+        colors: const [Color(0xFF0E0C12), AppTheme.onyx, Color(0xFF0B0A0D)],
+        accents: [widget.color, AppTheme.goldDeep],
+        particleCount: 12,
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => ListenableBuilder(
+            listenable: _playback,
+            builder: (context, _) {
+              // Everything else is fixed height; the dial takes what's left.
+              final dial = math.min(constraints.maxHeight - 470, constraints.maxWidth - 56).clamp(170.0, 320.0);
+              final jewel = dial * 0.54;
+              final playing = _playback.playing;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    DeckItem(
+                      index: 0,
+                      child: PlayerTopBar(
+                        label: 'THE PRIVATE COLLECTION',
+                        trailing: GlassIconButton(
+                          icon: _favourite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          active: _favourite,
+                          activeColor: AppTheme.champagne,
+                          borderColor: AppTheme.goldMid.withValues(alpha: 0.4),
+                          semanticLabel: 'Favourite',
+                          onTap: () => setState(() => _favourite = !_favourite),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    AnimatedBuilder(
+                      animation: Listenable.merge([_turn, _breath]),
+                      builder: (context, _) {
+                        final b = Curves.easeInOut.transform(_breath.value);
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            RouteReveal(
+                              child: GuillocheDial(
+                                size: dial,
+                                progress: _playback.progress,
+                                rotation: _turn.value * 2 * math.pi,
+                                innerRadiusFactor: 0.66,
+                              ),
+                            ),
+                            Transform.scale(
+                              scale: widget.scene != null && playing ? 1 + 0.035 * b : 1,
+                              child: _jewel(jewel),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 26),
+                    DeckItem(
+                      index: 1,
+                      child: Column(
+                        children: [
+                          Text(
+                            widget.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: 'CormorantGaramond',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 40,
+                              height: 1,
+                              letterSpacing: 0.3,
+                              color: AppTheme.ivory,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          DiamondCaption(widget.subtitle),
+                          const SizedBox(height: 14),
+                          BreathCue(breath: _breath, active: playing),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    DeckItem(index: 2, child: SignatureLine(color: widget.color, active: playing)),
+                    const SizedBox(height: 6),
+                    DeckItem(
+                      index: 3,
+                      child: LuxuryProgress(
+                        progress: _playback.progress,
+                        position: _playback.position,
+                        duration: _playback.duration,
+                        onSeek: _playback.seekFraction,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    DeckItem(
+                      index: 4,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GlassIconButton(
+                            icon: Icons.replay_10_rounded,
+                            size: 54,
+                            borderColor: AppTheme.goldMid.withValues(alpha: 0.4),
+                            semanticLabel: 'Back 10 seconds',
+                            onTap: () => _playback.skip(const Duration(seconds: -10)),
+                          ),
+                          const SizedBox(width: 30),
+                          PlayRing(
+                            playing: playing,
+                            glow: widget.color,
+                            turn: _turn,
+                            onTap: _playback.toggle,
+                          ),
+                          const SizedBox(width: 30),
+                          GlassIconButton(
+                            icon: Icons.forward_10_rounded,
+                            size: 54,
+                            borderColor: AppTheme.goldMid.withValues(alpha: 0.4),
+                            semanticLabel: 'Forward 10 seconds',
+                            onTap: () => _playback.skip(const Duration(seconds: 10)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    DeckItem(
+                      index: 5,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          LuxuryPill(
+                            icon: Icons.all_inclusive_rounded,
+                            label: 'LOOP',
+                            active: _playback.loop,
+                            onTap: _playback.toggleLoop,
+                          ),
+                          const SizedBox(width: 10),
+                          LuxuryPill(
+                            icon: Icons.bedtime_outlined,
+                            label: _playback.sleepMinutes == 0 ? 'SLEEP' : 'SLEEP ${_playback.sleepMinutes}M',
+                            active: _playback.sleepMinutes > 0,
+                            onTap: _playback.cycleSleepTimer,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            },
+          ),
+          ),
         ),
       ),
     );

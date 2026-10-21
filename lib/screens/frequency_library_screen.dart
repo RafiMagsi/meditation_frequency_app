@@ -3,203 +3,120 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/frequency.dart';
 import '../providers/providers.dart';
-import '../widgets/gloss.dart';
 import '../theme/app_theme.dart';
+import '../theme/card_styles.dart';
+import '../widgets/feature_scaffold.dart';
 import '../widgets/glow_card.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
-/// Frequency library: hero header + glowing tone rows.
+/// Frequency library: the cosmos card opens into one card per tone.
 class FrequencyLibraryScreen extends ConsumerWidget {
   const FrequencyLibraryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final frequencies = ref.watch(frequencyProvider);
-    return Scaffold(
-      backgroundColor: AppTheme.bgTop,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF171235), Color(0xFF0A0E27)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              Row(
-                children: [
-                  _BackButton(onTap: () => Navigator.of(context).maybePop()),
-                ],
-              ),
-              const SizedBox(height: 14),
-              // Hero header — the home card morphs into this.
-              Hero(
-                tag: 'card-frequencies',
-                child: Container(
-                  height: 132,
-                  padding: const EdgeInsets.all(22),
-                  foregroundDecoration: glossForeground(28),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5B48D6), Color(0xFF9C7BF0)],
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.violet.withValues(alpha: 0.35),
-                        blurRadius: 26,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Frequencies',
-                        style: TextStyle(
-                          fontFamily: 'CormorantGaramond',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 36,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Solfeggio healing tones',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              for (var i = 0; i < frequencies.length; i++) ...[
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: Duration(milliseconds: 420 + i * 70),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, t, rowChild) => Opacity(
-                    opacity: t.clamp(0.0, 1.0),
-                    child: Transform.translate(offset: Offset(0, 20 * (1 - t)), child: rowChild),
-                  ),
-                  child: _FrequencyTile(frequency: frequencies[i]),
-                ),
-                const SizedBox(height: 12),
-              ],
-            ],
-          ),
-        ),
+    return FeatureScaffold(
+      accent: AppTheme.violet,
+      header: const FeatureHeader(
+        heroTag: 'card-frequencies',
+        style: CardStyles.frequencies,
+        eyebrow: '6 TONES · 396 – 852 HZ',
+        title: 'Frequencies',
+        subtitle: 'Solfeggio healing tones',
       ),
+      children: [for (final f in frequencies) _ToneCard(frequency: f)],
     );
   }
 }
 
-class _FrequencyTile extends StatelessWidget {
-  const _FrequencyTile({required this.frequency});
+class _ToneCard extends StatelessWidget {
+  const _ToneCard({required this.frequency});
 
   final Frequency frequency;
 
   @override
   Widget build(BuildContext context) {
+    final f = frequency;
     return GlowCard(
+      style: CardStyles.tone(f.color),
+      borderRadius: 22,
+      height: 98,
+      semanticLabel: '${f.hz} Hz ${f.name}',
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      contentAlignment: Alignment.centerLeft,
       onTap: () => pushSeamless(
         context,
         PlayerScreen(
-          title: '${frequency.hz} Hz',
-          subtitle: frequency.name,
-          audioPath: frequency.audioPath,
-          color: frequency.color,
-          glow: frequency.glow,
-          heroTag: 'tone-${frequency.hz}',
+          title: '${f.hz} Hz',
+          subtitle: '${f.name} · ${f.chakra} chakra',
+          audioPath: f.audioPath,
+          color: f.color,
+          glow: f.glow,
+          heroTag: 'tone-${f.hz}',
         ),
       ),
-      glowColor: frequency.color,
-      borderRadius: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: Row(
         children: [
           Hero(
-            tag: 'tone-${frequency.hz}',
+            tag: 'tone-${f.hz}',
             child: Container(
-              width: 54,
-              height: 54,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [frequency.glow, frequency.color],
+                  center: const Alignment(-0.3, -0.35),
+                  colors: [Colors.white.withValues(alpha: 0.9), f.glow, f.color],
+                  stops: const [0, 0.3, 1],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: frequency.color.withValues(alpha: 0.5),
-                    blurRadius: 16,
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: f.color.withValues(alpha: 0.6), blurRadius: 18)],
               ),
-              child: const Icon(Icons.waves_rounded, color: Colors.white70, size: 22),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${frequency.hz} Hz',
+                  '${f.hz} Hz',
                   style: const TextStyle(
                     fontFamily: 'CormorantGaramond',
                     fontWeight: FontWeight.w600,
-                    fontSize: 24,
+                    fontSize: 26,
                     height: 1,
-                    color: AppTheme.textPrimary,
+                    color: Colors.white,
+                    shadows: textOnArt,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${f.name} · ${f.description}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.82),
+                    shadows: textOnArt,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${frequency.name} · ${frequency.description}',
-                  style: mutedStyle.copyWith(fontSize: 12),
+                  '${f.chakra.toUpperCase()} CHAKRA',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: capsStyle(color: f.glow, size: 9),
                 ),
               ],
             ),
           ),
-          Icon(Icons.play_circle_fill_rounded, color: frequency.glow, size: 34),
+          Icon(Icons.play_circle_fill_rounded, color: Colors.white.withValues(alpha: 0.92), size: 34),
         ],
-      ),
-    );
-  }
-}
-
-class _BackButton extends StatelessWidget {
-  const _BackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      key: const Key('back'),
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-        ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white70),
       ),
     );
   }

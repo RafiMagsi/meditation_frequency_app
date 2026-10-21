@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/card_styles.dart';
+import '../widgets/feature_scaffold.dart';
+import '../widgets/glass_button.dart';
 
-/// Breathing focus timer: a circle that inhales/exhales while counting.
+/// Breathing focus timer: a tide circle that inhales and exhales (4 s
+/// each) while the session counts down.
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
 
@@ -12,9 +18,9 @@ class TimerScreen extends StatefulWidget {
   State<TimerScreen> createState() => _TimerScreenState();
 }
 
-class _TimerScreenState extends State<TimerScreen>
-    with SingleTickerProviderStateMixin {
+class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStateMixin {
   static const _presets = [5, 10, 15, 20];
+  static const _tide = AppTheme.sky;
   int _minutes = 10;
   int _secondsLeft = 10 * 60;
   bool _running = false;
@@ -33,6 +39,7 @@ class _TimerScreenState extends State<TimerScreen>
   }
 
   void _toggle() {
+    HapticFeedback.mediumImpact();
     if (_running) {
       _ticker?.cancel();
       setState(() => _running = false);
@@ -60,6 +67,16 @@ class _TimerScreenState extends State<TimerScreen>
     });
   }
 
+  void _pick(int minutes) {
+    HapticFeedback.selectionClick();
+    _ticker?.cancel();
+    setState(() {
+      _minutes = minutes;
+      _secondsLeft = minutes * 60;
+      _running = false;
+    });
+  }
+
   String _fmt(int total) {
     final m = (total ~/ 60).toString().padLeft(2, '0');
     final s = (total % 60).toString().padLeft(2, '0');
@@ -70,206 +87,190 @@ class _TimerScreenState extends State<TimerScreen>
   Widget build(BuildContext context) {
     final total = _minutes * 60;
     final progress = total == 0 ? 0.0 : 1 - (_secondsLeft / total);
-    return Scaffold(
-      backgroundColor: AppTheme.bgTop,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF101B3E), Color(0xFF0A0E27)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Row(
+    return FeatureScaffold(
+      accent: _tide,
+      header: FeatureHeader(
+        heroTag: 'card-timer',
+        style: CardStyles.timer,
+        height: 124,
+        title: 'Focus Timer',
+        subtitle: _running ? 'Breathe with the tide' : 'Set your session',
+      ),
+      body: Column(
+        children: [
+          const Spacer(),
+          SizedBox(
+            width: 260,
+            height: 260,
+            child: AnimatedBuilder(
+              animation: _breath,
+              builder: (context, _) {
+                final pulse = Curves.easeInOut.transform(_breath.value);
+                final scale = _running ? 0.84 + 0.16 * pulse : 1.0;
+                final inhaling = _breath.status == AnimationStatus.forward;
+                return Stack(
+                  alignment: Alignment.center,
                   children: [
-                    GestureDetector(
-                      key: const Key('back'),
-                      onTap: () => Navigator.of(context).maybePop(),
+                    Transform.scale(
+                      scale: scale,
                       child: Container(
-                        width: 44,
-                        height: 44,
+                        width: 236,
+                        height: 236,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.08),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                          gradient: RadialGradient(
+                            colors: [
+                              _tide.withValues(alpha: 0.32 + 0.14 * pulse),
+                              _tide.withValues(alpha: 0.06),
+                              _tide.withValues(alpha: 0),
+                            ],
+                            stops: const [0, 0.7, 1],
+                          ),
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 18, color: Colors.white70),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              const Text(
-                'Focus Timer',
-                style: TextStyle(
-                  fontFamily: 'CormorantGaramond',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 34,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(_running ? 'Breathe with the circle' : 'Set your session',
-                  style: mutedStyle.copyWith(fontSize: 13)),
-              const Spacer(),
-              // Breathing ring + countdown.
-              SizedBox(
-                width: 260,
-                height: 260,
-                child: AnimatedBuilder(
-                  animation: _breath,
-                  builder: (context, _) {
-                    final pulse = Curves.easeInOut.transform(_breath.value);
-                    final scale = _running ? 0.86 + 0.14 * pulse : 1.0;
-                    return Stack(
-                      alignment: Alignment.center,
+                    SizedBox.square(
+                      dimension: 236,
+                      child: CustomPaint(
+                        painter: _RingPainter(
+                          progress: progress,
+                          color: _tide,
+                          trackColor: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Transform.scale(
-                          scale: scale,
-                          child: Container(
-                            width: 230,
-                            height: 230,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  const Color(0xFF6EA8F6).withValues(alpha: 0.28 + 0.12 * (pulse)),
-                                  const Color(0xFF6EA8F6).withValues(alpha: 0.0),
-                                ],
-                              ),
-                            ),
+                        Text(
+                          _fmt(_secondsLeft),
+                          style: const TextStyle(
+                            fontFamily: 'CormorantGaramond',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 58,
+                            height: 1,
+                            color: AppTheme.textPrimary,
+                            fontFeatures: [FontFeature.tabularFigures()],
                           ),
                         ),
-                        SizedBox(
-                          width: 230,
-                          height: 230,
-                          child: CustomPaint(
-                            painter: _RingPainter(
-                              progress: progress,
-                              color: const Color(0xFF6EA8F6),
-                              trackColor: Colors.white.withValues(alpha: 0.08),
-                            ),
+                        const SizedBox(height: 6),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          child: Text(
+                            _running ? (inhaling ? 'INHALE' : 'EXHALE') : 'OF $_minutes:00',
+                            key: ValueKey(_running ? inhaling : null),
+                            style: capsStyle(color: _running ? _tide : AppTheme.textMuted, size: 10.5),
                           ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _fmt(_secondsLeft),
-                              style: const TextStyle(
-                                fontFamily: 'CormorantGaramond',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 56,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                            Text('of $_minutes:00', style: mutedStyle.copyWith(fontSize: 12)),
-                          ],
                         ),
                       ],
-                    );
-                  },
-                ),
-              ),
-              const Spacer(),
-              // Presets.
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (final m in _presets)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: GestureDetector(
-                        onTap: () {
-                          _ticker?.cancel();
-                          setState(() {
-                            _minutes = m;
-                            _secondsLeft = m * 60;
-                            _running = false;
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 240),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            gradient: _minutes == m
-                                ? const LinearGradient(
-                                    colors: [Color(0xFF2E4680), Color(0xFF5490E0)])
-                                : null,
-                            color: _minutes == m ? null : AppTheme.surface,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              for (final m in _presets) ...[
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: _minutes == m,
+                    label: '$m minutes',
+                    child: GestureDetector(
+                      onTap: () => _pick(m),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 260),
+                        height: 58,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight,
+                            colors: _minutes == m
+                                ? const [Color(0xFF1C2E66), Color(0xFF4A78C8)]
+                                : const [Color(0xFF12152B), Color(0xFF1B1F3D)],
                           ),
-                          child: Text(
-                            '$m min',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: _minutes == m ? Colors.white : AppTheme.textMuted,
+                          border: Border.all(
+                            color: _minutes == m ? _tide.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.08),
+                          ),
+                          boxShadow: _minutes == m
+                              ? [BoxShadow(color: _tide.withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6))]
+                              : null,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '$m',
+                              style: TextStyle(
+                                fontFamily: 'CormorantGaramond',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 22,
+                                height: 1,
+                                color: _minutes == m ? Colors.white : AppTheme.textPrimary,
+                              ),
                             ),
-                          ),
+                            Text('MIN', style: capsStyle(color: _minutes == m ? Colors.white70 : AppTheme.textMuted, size: 8)),
+                          ],
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: _reset,
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.08),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                      ),
-                      child: const Icon(Icons.refresh_rounded, color: Colors.white70),
-                    ),
                   ),
-                  const SizedBox(width: 22),
-                  GestureDetector(
-                    onTap: _toggle,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                            colors: [Color(0xFF3D5A9E), Color(0xFF6EA8F6)]),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6EA8F6)
-                                .withValues(alpha: _running ? 0.55 : 0.3),
-                            blurRadius: _running ? 36 : 20,
-                          ),
-                        ],
+                ),
+                if (m != _presets.last) const SizedBox(width: 10),
+              ],
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GlassIconButton(icon: Icons.refresh_rounded, size: 56, semanticLabel: 'Reset', onTap: _reset),
+              const SizedBox(width: 24),
+              Semantics(
+                button: true,
+                label: _running ? 'Pause' : 'Start',
+                child: GestureDetector(
+                  onTap: _toggle,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 78,
+                    height: 78,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight,
+                        colors: [Color(0xFF2E4680), Color(0xFF7DB4FA)],
                       ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _tide.withValues(alpha: _running ? 0.55 : 0.3),
+                          blurRadius: _running ? 36 : 20,
+                        ),
+                      ],
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
                       child: Icon(
                         _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        key: ValueKey(_running),
                         color: Colors.white,
                         size: 38,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 80),
             ],
           ),
-        ),
+          const Spacer(),
+        ],
       ),
     );
   }
@@ -290,27 +291,35 @@ class _RingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2 - 6;
-    final track = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round
-      ..color = trackColor;
-    canvas.drawCircle(center, radius, track);
-    final arc = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round
-      ..color = color;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..color = trackColor,
+    );
+    final sweep = 2 * math.pi * progress.clamp(0.0, 1.0);
+    if (sweep <= 0) return;
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -1.5707963268,
-      6.2831853072 * progress.clamp(0.0, 1.0),
+      rect,
+      -math.pi / 2,
+      sweep,
       false,
-      arc,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round
+        ..shader = SweepGradient(
+          colors: [color.withValues(alpha: 0.4), color, Colors.white],
+          stops: const [0, 0.85, 1],
+          endAngle: math.max(sweep, 0.01),
+          transform: const GradientRotation(-math.pi / 2),
+        ).createShader(rect),
     );
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.progress != progress || old.color != color;
+  bool shouldRepaint(_RingPainter old) => old.progress != progress || old.color != color;
 }

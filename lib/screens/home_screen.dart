@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breathing_orb.dart';
+import '../widgets/deck.dart';
 import '../widgets/glow_card.dart';
+import '../widgets/luxury.dart';
 import '../widgets/seamless_route.dart';
+import 'abundance_screen.dart';
 import 'frequency_library_screen.dart';
 import 'frequency_meter_screen.dart';
 import 'guided_meditations_screen.dart';
@@ -13,9 +17,9 @@ import 'playlist_screen.dart';
 import 'progress_screen.dart';
 import 'timer_screen.dart';
 
-/// The card hub. Every feature is a glowing card that flies seamlessly
-/// into its screen. Cards stagger in one by one on load — the demo's
-/// "wow, this is smooth" moment.
+/// The card hub. Every feature is a card with its own artwork; cards are
+/// dealt in on arrival, and tapping one sends the deck sliding off to the
+/// left while that card morphs into its screen.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -42,25 +46,30 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: AmbientBackground(
         child: SafeArea(
+          bottom: false,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
             children: [
-              _Header(greeting: _greeting),
+              DeckItem(index: 0, child: _Header(greeting: _greeting)),
               const SizedBox(height: 22),
-              _StaggeredEntry(
-                index: 0,
+              DeckItem(
+                index: 1,
+                child: _AbundanceCard(onTap: () => pushSeamless(context, const AbundanceScreen())),
+              ),
+              const SizedBox(height: 14),
+              DeckItem(
+                index: 2,
                 child: Row(
                   children: [
                     Expanded(
                       flex: 3,
                       child: _FeatureCard(
                         title: 'Frequencies',
-                        subtitle: '6 healing tones',
+                        subtitle: '6 Solfeggio tones',
                         icon: Icons.graphic_eq_rounded,
                         heroTag: 'card-frequencies',
-                        height: 178,
-                        gradient: const [Color(0xFF4E3DBF), Color(0xFF9C7BF0)],
-                        glow: AppTheme.violet,
+                        height: 186,
+                        style: CardStyles.frequencies,
                         onTap: () => pushSeamless(context, const FrequencyLibraryScreen()),
                       ),
                     ),
@@ -72,10 +81,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle: '6 sessions',
                         icon: Icons.self_improvement_rounded,
                         heroTag: 'card-guided',
-                        height: 178,
-                        gradient: const [Color(0xFF1E6E6E), Color(0xFF5EEAD4)],
-                        glow: AppTheme.teal,
-                        iconOnTop: true,
+                        height: 186,
+                        style: CardStyles.guided,
                         onTap: () => pushSeamless(context, const GuidedMeditationsScreen()),
                       ),
                     ),
@@ -83,8 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _StaggeredEntry(
-                index: 1,
+              DeckItem(
+                index: 3,
                 child: Row(
                   children: [
                     Expanded(
@@ -94,9 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle: 'How do you feel?',
                         icon: Icons.wb_sunny_rounded,
                         heroTag: 'card-mood',
-                        height: 148,
-                        gradient: const [Color(0xFF9E3F6B), Color(0xFFF0A0C8)],
-                        glow: AppTheme.pink,
+                        height: 156,
+                        style: CardStyles.mood,
                         onTap: () => pushSeamless(context, const MoodScreen()),
                       ),
                     ),
@@ -105,12 +111,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       flex: 3,
                       child: _FeatureCard(
                         title: 'Focus Timer',
-                        subtitle: 'Breathe with the circle',
+                        subtitle: 'Breathe with the tide',
                         icon: Icons.timer_rounded,
                         heroTag: 'card-timer',
-                        height: 148,
-                        gradient: const [Color(0xFF2E4680), Color(0xFF6EA8F6)],
-                        glow: const Color(0xFF6EA8F6),
+                        height: 156,
+                        style: CardStyles.timer,
                         onTap: () => pushSeamless(context, const TimerScreen()),
                       ),
                     ),
@@ -118,20 +123,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _StaggeredEntry(
-                index: 2,
+              DeckItem(
+                index: 4,
                 child: Row(
                   children: [
                     Expanded(
                       flex: 3,
                       child: _FeatureCard(
                         title: 'Progress',
-                        subtitle: 'This week',
-                        icon: Icons.stacked_bar_chart_rounded,
+                        subtitle: '81 mindful minutes',
+                        icon: Icons.insights_rounded,
                         heroTag: 'card-progress',
-                        height: 148,
-                        gradient: const [Color(0xFF7A5F1A), Color(0xFFF6C77A)],
-                        glow: AppTheme.gold,
+                        height: 156,
+                        style: CardStyles.progress,
                         onTap: () => pushSeamless(context, const ProgressScreen()),
                       ),
                     ),
@@ -140,12 +144,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       flex: 2,
                       child: _FeatureCard(
                         title: 'Playlists',
-                        subtitle: 'Your flow',
+                        subtitle: 'Your flows',
                         icon: Icons.queue_music_rounded,
                         heroTag: 'card-playlists',
-                        height: 148,
-                        gradient: const [Color(0xFF8A3A60), Color(0xFFE879B8)],
-                        glow: AppTheme.pink,
+                        height: 156,
+                        style: CardStyles.playlists,
                         onTap: () => pushSeamless(context, const PlaylistScreen()),
                       ),
                     ),
@@ -153,16 +156,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _StaggeredEntry(
-                index: 3,
+              DeckItem(
+                index: 5,
                 child: _FeatureCard(
                   title: 'Aura Meter',
                   subtitle: 'Visualize your sound field',
                   icon: Icons.radar_rounded,
                   heroTag: 'card-meter',
-                  height: 104,
-                  gradient: const [Color(0xFF3B3078), Color(0xFF8B7CF6)],
-                  glow: AppTheme.violet,
+                  height: 108,
+                  style: CardStyles.meter,
                   horizontal: true,
                   onTap: () => pushSeamless(context, const FrequencyMeterScreen()),
                 ),
@@ -184,56 +186,109 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Hero(
-          tag: 'orb',
-          child: BreathingOrb(size: 62),
-        ),
+        const Hero(tag: 'orb', child: BreathingOrb(size: 62)),
         const SizedBox(width: 14),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(greeting, style: mutedStyle.copyWith(fontSize: 13)),
-            const SizedBox(height: 2),
-            const Text(
-              'Tune in',
-              style: TextStyle(
-                fontFamily: 'CormorantGaramond',
-                fontWeight: FontWeight.w600,
-                fontSize: 32,
-                height: 1,
-                color: AppTheme.textPrimary,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(greeting, style: mutedStyle.copyWith(fontSize: 13)),
+              const SizedBox(height: 2),
+              const Text(
+                'Tune in',
+                style: TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 34,
+                  height: 1,
+                  color: AppTheme.textPrimary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.local_fire_department_rounded, size: 16, color: AppTheme.amber),
+              const SizedBox(width: 4),
+              Text('6 days', style: capsStyle(color: AppTheme.textPrimary, size: 10)),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-/// Wraps a card with a staggered fade-up entrance.
-class _StaggeredEntry extends StatelessWidget {
-  const _StaggeredEntry({required this.child, required this.index});
+/// The featured black card — a metal card with a gold chip.
+class _AbundanceCard extends StatelessWidget {
+  const _AbundanceCard({required this.onTap});
 
-  final Widget child;
-  final int index;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 500 + index * 130),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) {
-        return Opacity(
-          opacity: t.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, 26 * (1 - t)),
-            child: child,
+    return GlowCard(
+      style: CardStyles.abundance,
+      heroTag: 'card-abundance',
+      height: 172,
+      semanticLabel: 'Money Manifestation',
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const GoldChip(width: 38),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.goldMid.withValues(alpha: 0.5), width: 0.8),
+                ),
+                child: GoldText('NEW · 888 HZ', style: capsStyle(size: 9)),
+              ),
+            ],
           ),
-        );
-      },
-      child: child,
+          const Spacer(),
+          Text('ABUNDANCE', style: capsStyle(color: AppTheme.taupe, size: 10)),
+          const SizedBox(height: 4),
+          const FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: GoldText(
+              'Money Manifestation',
+              style: TextStyle(
+                fontFamily: 'CormorantGaramond',
+                fontWeight: FontWeight.w600,
+                fontSize: 30,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Wealth frequencies · affirmations · ritual',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.w600,
+              fontSize: 11.5,
+              color: AppTheme.ivory.withValues(alpha: 0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -245,11 +300,9 @@ class _FeatureCard extends StatelessWidget {
     required this.icon,
     required this.heroTag,
     required this.height,
-    required this.gradient,
-    required this.glow,
+    required this.style,
     required this.onTap,
     this.horizontal = false,
-    this.iconOnTop = false,
   });
 
   final String title;
@@ -257,22 +310,21 @@ class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final String heroTag;
   final double height;
-  final List<Color> gradient;
-  final Color glow;
+  final CardStyle style;
   final VoidCallback onTap;
   final bool horizontal;
-  final bool iconOnTop;
 
   @override
   Widget build(BuildContext context) {
     final iconBadge = Container(
-      width: 46,
-      height: 46,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
+        shape: BoxShape.circle,
         color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 0.8),
       ),
-      child: Icon(icon, color: Colors.white, size: 24),
+      child: Icon(icon, color: Colors.white, size: 20),
     );
 
     final texts = Column(
@@ -280,97 +332,63 @@ class _FeatureCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          maxLines: 2,
-          overflow: TextOverflow.fade,
-          style: const TextStyle(
-            fontFamily: 'CormorantGaramond',
-            fontWeight: FontWeight.w600,
-            fontSize: 23,
-            height: 1.02,
-            color: Colors.white,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            maxLines: 2,
+            style: TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              height: 1.02,
+              color: style.foreground,
+              shadows: textOnArt,
+            ),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         Text(
           subtitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: 'Quicksand',
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-            color: Colors.white.withValues(alpha: 0.78),
+            fontWeight: FontWeight.w600,
+            fontSize: 11.5,
+            color: style.muted,
+            shadows: textOnArt,
           ),
         ),
       ],
     );
 
-    return SizedBox(
+    return GlowCard(
+      style: style,
+      heroTag: heroTag,
       height: height,
-      child: GlowCard(
-        heroTag: heroTag,
-        onTap: onTap,
-        gradientColors: gradient,
-        glowColor: glow,
-        borderRadius: 26,
-        padding: const EdgeInsets.all(18),
-        child: Stack(
-          children: [
-            // Decorative ring art.
-            Positioned(
-              right: -22,
-              top: -22,
-              child: Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    width: 1.6,
-                  ),
-                ),
-              ),
+      semanticLabel: title.replaceAll('\n', ' '),
+      onTap: onTap,
+      padding: const EdgeInsets.all(16),
+      contentAlignment: horizontal ? Alignment.centerLeft : Alignment.bottomLeft,
+      child: horizontal
+          ? Row(
+              children: [
+                iconBadge,
+                const SizedBox(width: 14),
+                Expanded(child: texts),
+                Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withValues(alpha: 0.85), size: 16),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                iconBadge,
+                const Spacer(),
+                texts,
+              ],
             ),
-            Positioned(
-              right: -6,
-              bottom: -34,
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.07),
-                ),
-              ),
-            ),
-            if (horizontal)
-              Row(
-                children: [
-                  iconBadge,
-                  const SizedBox(width: 14),
-                  Expanded(child: texts),
-                  Icon(Icons.arrow_forward_ios_rounded,
-                      color: Colors.white.withValues(alpha: 0.85), size: 16),
-                ],
-              )
-            else if (iconOnTop)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [iconBadge, Flexible(child: texts)],
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [iconBadge, const SizedBox(height: 12), Flexible(child: texts)],
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

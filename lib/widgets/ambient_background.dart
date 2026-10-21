@@ -15,12 +15,16 @@ class AmbientBackground extends StatefulWidget {
       Color(0xFF150F33),
       Color(0xFF1B1038),
     ],
+    this.accents = const [AppTheme.violet, AppTheme.pink],
     this.particleCount = 22,
     this.showParticles = true,
   });
 
   final Widget child;
   final List<Color> colors;
+
+  /// The two aurora blob tints.
+  final List<Color> accents;
   final int particleCount;
   final bool showParticles;
 
@@ -74,8 +78,8 @@ class _AmbientBackgroundState extends State<AmbientBackground>
                 painter: _AuroraPainter(
                   blob1Center: c1,
                   blob2Center: c2,
-                  blob1Color: AppTheme.violet.withValues(alpha: 0.16 + 0.05 * math.sin(t * 6)),
-                  blob2Color: AppTheme.pink.withValues(alpha: 0.12 + 0.04 * math.cos(t * 5)),
+                  blob1Color: widget.accents[0].withValues(alpha: 0.16 + 0.05 * math.sin(t * 2 * math.pi)),
+                  blob2Color: widget.accents[1].withValues(alpha: 0.12 + 0.04 * math.cos(t * 2 * math.pi)),
                 ),
               ),
             ),

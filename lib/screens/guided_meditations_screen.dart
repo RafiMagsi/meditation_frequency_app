@@ -4,117 +4,43 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/meditation.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
-import '../widgets/gloss.dart';
+import '../theme/card_styles.dart';
+import '../widgets/feature_scaffold.dart';
+import '../widgets/glow_card.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
-/// Guided meditations: hero header + session grid.
+/// Guided meditations: the forest card opens into illustrated sessions;
+/// each session's artwork becomes the player's jewel.
 class GuidedMeditationsScreen extends ConsumerWidget {
   const GuidedMeditationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final meditations = ref.watch(meditationProvider);
-    return Scaffold(
-      backgroundColor: AppTheme.bgTop,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0F2A2C), Color(0xFF0A0E27)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+    return FeatureScaffold(
+      accent: AppTheme.teal,
+      header: const FeatureHeader(
+        heroTag: 'card-guided',
+        style: CardStyles.guided,
+        eyebrow: '6 SESSIONS · 5 – 20 MIN',
+        title: 'Guided Sessions',
+        subtitle: 'Breath-led flows on healing tones',
+      ),
+      children: [
+        for (var i = 0; i < meditations.length; i += 2)
+          Row(
             children: [
-              Row(
-                children: [
-                  _BackButton(onTap: () => Navigator.of(context).maybePop()),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Hero(
-                tag: 'card-guided',
-                child: Container(
-                  height: 132,
-                  padding: const EdgeInsets.all(22),
-                  foregroundDecoration: glossForeground(28),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1E6E6E), Color(0xFF5EEAD4)],
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.teal.withValues(alpha: 0.3),
-                        blurRadius: 26,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Guided Sessions',
-                        style: TextStyle(
-                          fontFamily: 'CormorantGaramond',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 36,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Voice-off flows with healing tones',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 0.92,
-                ),
-                itemCount: meditations.length,
-                itemBuilder: (context, i) {
-                  final m = meditations[i];
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: Duration(milliseconds: 420 + i * 80),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, t, child) => Opacity(
-                      opacity: t.clamp(0.0, 1.0),
-                      child: Transform.translate(
-                        offset: Offset(0, 22 * (1 - t)),
-                        child: Transform.scale(scale: 0.96 + 0.04 * t, child: child),
-                      ),
-                    ),
-                    child: _SessionCard(meditation: m, index: i),
-                  );
-                },
+              Expanded(child: _SessionCard(meditation: meditations[i], index: i)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: i + 1 < meditations.length
+                    ? _SessionCard(meditation: meditations[i + 1], index: i + 1)
+                    : const SizedBox.shrink(),
               ),
             ],
           ),
-        ),
-      ),
+      ],
     );
   }
 }
@@ -127,112 +53,72 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final m = meditation;
+    return GlowCard(
+      style: CardStyles.session(m.scene),
+      heroTag: 'med-$index',
+      height: 200,
+      borderRadius: 24,
+      semanticLabel: m.title,
+      padding: const EdgeInsets.all(14),
       onTap: () => pushSeamless(
         context,
         PlayerScreen(
-          title: meditation.title,
-          subtitle: '${meditation.minutes} min',
-          audioPath: meditation.audioPath,
-          color: meditation.color,
-          glow: meditation.color.withValues(alpha: 0.85),
+          title: m.title,
+          subtitle: '${m.minutes} min · ${m.hz} Hz',
+          audioPath: m.audioPath,
+          color: m.color,
+          glow: Color.lerp(m.color, Colors.white, 0.35)!,
           heroTag: 'med-$index',
-          icon: meditation.icon,
+          scene: m.scene,
         ),
-      ),        child: Hero(
-        tag: 'med-$index',
-        child: GlossOverlay(
-          borderRadius: 26,
-          child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
-            color: AppTheme.surface,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-            boxShadow: [
-              BoxShadow(
-                color: meditation.color.withValues(alpha: 0.14),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [meditation.color, meditation.color.withValues(alpha: 0.6)],
-                  ),
-                ),
-                child: Icon(meditation.icon, color: Colors.white, size: 24),
-              ),
-              const Spacer(),
-              Text(
-                meditation.title,
-                style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 23,
-                  height: 1.05,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                meditation.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: mutedStyle.copyWith(fontSize: 11.5),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.schedule_rounded, size: 13, color: meditation.color),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${meditation.minutes} min',
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
-                      color: meditation.color,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-          ),
       ),
-    );
-  }
-}
-
-class _BackButton extends StatelessWidget {
-  const _BackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      key: const Key('back'),
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-        ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white70),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.black.withValues(alpha: 0.28),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 0.6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.schedule_rounded, size: 11, color: Colors.white),
+                const SizedBox(width: 4),
+                Text('${m.minutes} MIN', style: capsStyle(color: Colors.white, size: 8.5)),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Text(
+            m.title,
+            style: const TextStyle(
+              fontFamily: 'CormorantGaramond',
+              fontWeight: FontWeight.w600,
+              fontSize: 23,
+              height: 1.02,
+              color: Colors.white,
+              shadows: textOnArt,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            m.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              height: 1.3,
+              color: Colors.white.withValues(alpha: 0.85),
+              shadows: textOnArt,
+            ),
+          ),
+        ],
       ),
     );
   }

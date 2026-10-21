@@ -9,6 +9,7 @@ class Frequency {
     required this.audioPath,
     required this.color,
     required this.glow,
+    required this.chakra,
   });
 
   final String hz;
@@ -17,4 +18,7 @@ class Frequency {
   final String audioPath;
   final Color color;
   final Color glow;
+
+  /// The energy centre this Solfeggio tone traditionally pairs with.
+  final String chakra;
 }
