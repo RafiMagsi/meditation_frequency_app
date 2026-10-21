@@ -66,8 +66,8 @@ class _BlackCardFace extends StatelessWidget {
           child: GoldText(
             '8888  8888  8888  0888',
             style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w500,
               fontSize: 17,
               letterSpacing: 2.2,
               shadows: [
@@ -87,9 +87,9 @@ class _BlackCardFace extends StatelessWidget {
                 child: GoldText(
                   'Abundance',
                   style: TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 36,
+                    fontSize: 29,
                     height: 1,
                   ),
                 ),
@@ -137,9 +137,9 @@ class _IntentionCard extends StatelessWidget {
           Text(
             '“$affirmation”',
             style: const TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w500,
-              fontSize: 26,
+              fontSize: 21,
               height: 1.15,
               color: AppTheme.ivory,
             ),
@@ -183,9 +183,9 @@ class _MoneyToneCard extends StatelessWidget {
                 GoldText(
                   '${f.hz} Hz',
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 24,
+                    fontSize: 19,
                     height: 1,
                   ),
                 ),
@@ -195,8 +195,8 @@ class _MoneyToneCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                     color: AppTheme.ivory,
                   ),
@@ -271,7 +271,7 @@ class _RitualCard extends StatelessWidget {
                   ),
                   child: GoldText(
                     '${i + 1}',
-                    style: const TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.w700, fontSize: 16),
+                    style: const TextStyle(fontFamily: 'InterDisplay', fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -282,9 +282,9 @@ class _RitualCard extends StatelessWidget {
                       Text(
                         _steps[i].$1,
                         style: const TextStyle(
-                          fontFamily: 'CormorantGaramond',
+                          fontFamily: 'InterDisplay',
                           fontWeight: FontWeight.w600,
-                          fontSize: 19,
+                          fontSize: 15,
                           color: AppTheme.ivory,
                         ),
                       ),

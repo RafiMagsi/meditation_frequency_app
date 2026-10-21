@@ -166,9 +166,9 @@ class _InnerLakeScreenState extends ConsumerState<InnerLakeScreen> with TickerPr
                               stage.title,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontFamily: 'CormorantGaramond',
+                                fontFamily: 'InterDisplay',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 36,
+                                fontSize: 29,
                                 height: 1.05,
                                 color: Colors.white,
                                 shadows: [Shadow(color: Color(0xAA000000), blurRadius: 18)],
@@ -179,8 +179,8 @@ class _InnerLakeScreenState extends ConsumerState<InnerLakeScreen> with TickerPr
                               stage.body,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w500,
                                 fontSize: 14,
                                 height: 1.45,
                                 color: Colors.white.withValues(alpha: 0.88),
@@ -283,9 +283,9 @@ class _BreathCue extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w500,
-                  fontSize: 22,
+                  fontSize: 17.5,
                   color: Colors.white,
                   shadows: [Shadow(color: Color(0xAA000000), blurRadius: 12)],
                 ),

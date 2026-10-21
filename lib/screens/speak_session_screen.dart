@@ -10,6 +10,7 @@ import '../services/practice_store.dart';
 import '../services/voice.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -29,13 +30,87 @@ class SpeakSessionScreen extends ConsumerStatefulWidget {
 }
 
 /// Lower-case words without punctuation, for matching speech to text.
-List<String> spokenTokens(String text) => text
+/// Contractions are expanded and numbers become digits, so "I'm making ten
+/// thousand dollars" matches "I am making \$10,000".
+List<String> spokenTokens(String text) => _digits(text
     .toLowerCase()
+    .replaceAll('’', "'")
+    .replaceAll(RegExp(r'(?<=\d),(?=\d)'), '')
     .replaceAll(RegExp(r"[^a-z0-9'\s]"), ' ')
     .split(RegExp(r'\s+'))
-    .map((w) => w.replaceAll("'", ''))
+    .expand((w) => _contractions[w] ?? [w.replaceAll("'", '')])
     .where((w) => w.isNotEmpty)
-    .toList();
+    .toList());
+
+const _contractions = {
+  "i'm": ['i', 'am'],
+  "i've": ['i', 'have'],
+  "i'll": ['i', 'will'],
+  "i'd": ['i', 'would'],
+  "you're": ['you', 'are'],
+  "you've": ['you', 'have'],
+  "you'll": ['you', 'will'],
+  "we're": ['we', 'are'],
+  "we've": ['we', 'have'],
+  "they're": ['they', 'are'],
+  "it's": ['it', 'is'],
+  "that's": ['that', 'is'],
+  "don't": ['do', 'not'],
+  "can't": ['can', 'not'],
+  'cannot': ['can', 'not'],
+  "won't": ['will', 'not'],
+  "isn't": ['is', 'not'],
+  "aren't": ['are', 'not'],
+};
+
+const _numberWords = {
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8,
+  'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30,
+  'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+};
+const _scales = {'thousand': 1000, 'million': 1000000, 'billion': 1000000000};
+
+/// Folds spoken numbers ("ten thousand", "10 thousand", "10k") into digits.
+List<String> _digits(List<String> words) {
+  final out = <String>[];
+  int? total; // finished thousands, millions…
+  int? group; // the part below a thousand being built
+  void flush() {
+    if (total != null || group != null) out.add('${(total ?? 0) + (group ?? 0)}');
+    total = null;
+    group = null;
+  }
+
+  for (var i = 0; i < words.length; i++) {
+    final w = words[i];
+    final k = RegExp(r'^(\d+)k$').firstMatch(w);
+    final n = k != null ? int.parse(k[1]!) * 1000 : int.tryParse(w) ?? _numberWords[w];
+    final g = group;
+    if (n != null) {
+      // Spelled "twenty five", "hundred five" and "thousand five" carry a
+      // number on; "one two" (or "10000 50") is two numbers.
+      final carries = _numberWords.containsKey(w) &&
+          (g == null
+              ? total != null && n < 1000
+              : (g >= 100 && g % 100 == 0 && n < 100) || (g % 100 >= 20 && g % 10 == 0 && n < 10));
+      if (!carries) flush();
+      group = (carries ? group ?? 0 : 0) + n;
+    } else if (w == 'hundred' && (g == null || g < 100)) {
+      group = (g ?? 1) * 100;
+    } else if (_scales[w] case final scale? when g != null || total == null) {
+      total = (total ?? 0) + (g ?? 1) * scale;
+      group = null;
+    } else if (w == 'and' && g != null && i + 1 < words.length && _numberWords.containsKey(words[i + 1])) {
+      continue; // "a hundred and five"
+    } else {
+      flush();
+      out.add(w);
+    }
+  }
+  flush();
+  return out;
+}
 
 class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with SingleTickerProviderStateMixin {
   static const _reps = 3;
@@ -117,7 +192,11 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       onLevel: (l) => _level.value = l,
       onDone: () {
         if (!mounted) return;
-        setState(() => _listening = false);
+        setState(() {
+          _listening = false;
+          // Stopped short of the whole affirmation: say so, don't just reset.
+          if (_affirm && !_justDone && _heard.isNotEmpty) _hint = 'ALMOST — TAP AND SAY IT ONCE MORE';
+        });
         _level.value = 0;
       },
     );
@@ -142,7 +221,7 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       if (spokenTokens(h.words).length >= 3) {
         _complete(spoken: h.words);
       } else {
-        setState(() => _hint = 'Say a little more…');
+        setState(() => _hint = 'SAY A LITTLE MORE…');
       }
     }
   }
@@ -219,7 +298,8 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       body: AmbientBackground(
         colors: [Color.lerp(AppTheme.bgTop, _color, 0.12)!, AppTheme.bgTop, const Color(0xFF09080D)],
         accents: [_color, Color.lerp(_color, AppTheme.violet, 0.5)!],
-        particleCount: 12,
+        video: Cosmos.stars,
+        videoOpacity: 0.6,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -308,9 +388,9 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
                 return AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 260),
                   style: TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 32,
+                    fontSize: 25.5,
                     height: 1.15,
                     color: lit ? AppTheme.ivory : AppTheme.ivory.withValues(alpha: 0.32),
                     shadows: lit ? [Shadow(color: _color.withValues(alpha: 0.8), blurRadius: 18)] : const [],
@@ -358,9 +438,9 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
           prompt,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontFamily: 'CormorantGaramond',
+            fontFamily: 'InterDisplay',
             fontWeight: FontWeight.w600,
-            fontSize: 30,
+            fontSize: 24,
             height: 1.15,
             color: AppTheme.ivory,
           ),
@@ -379,9 +459,9 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
             _heard.isEmpty ? (_listening ? '…' : 'Your words will appear here.') : '“$_heard”',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w500,
-              fontSize: 21,
+              fontSize: 17,
               height: 1.25,
               color: _heard.isEmpty ? AppTheme.textMuted : AppTheme.ivory,
             ),
@@ -414,11 +494,11 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
               controller: _typed,
               textCapitalization: TextCapitalization.sentences,
               cursorColor: _color,
-              style: const TextStyle(fontFamily: 'CormorantGaramond', fontSize: 19, color: AppTheme.ivory),
+              style: const TextStyle(fontFamily: 'InterDisplay', fontSize: 15, color: AppTheme.ivory),
               decoration: InputDecoration(
                 hintText: 'Or type it here…',
                 hintStyle: TextStyle(
-                    fontFamily: 'CormorantGaramond', fontSize: 18, color: AppTheme.textMuted.withValues(alpha: 0.7)),
+                    fontFamily: 'InterDisplay', fontSize: 14.5, color: AppTheme.textMuted.withValues(alpha: 0.7)),
                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: _color.withValues(alpha: 0.3))),
                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: _color)),
               ),

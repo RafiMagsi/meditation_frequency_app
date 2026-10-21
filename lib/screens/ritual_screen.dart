@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/card_face.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -100,7 +101,8 @@ class _RitualScreenState extends ConsumerState<RitualScreen> {
       body: AmbientBackground(
         colors: [Color.lerp(AppTheme.bgTop, glow, 0.16)!, AppTheme.bgTop, const Color(0xFF0B0920)],
         accents: [glow, Color.lerp(glow, AppTheme.violet, 0.5)!],
-        particleCount: 12,
+        video: Cosmos.nebula,
+        videoOpacity: 0.55,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -235,9 +237,9 @@ class _RitualHeader extends ConsumerWidget {
                   ritual.name,
                   maxLines: 1,
                   style: TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 28,
+                    fontSize: 22.5,
                     height: 1,
                     color: ritual.style.foreground,
                     shadows: textOnArt,
@@ -338,9 +340,9 @@ class _StepCard extends StatelessWidget {
             Text(
               step.title,
               style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w600,
-                fontSize: 34,
+                fontSize: 27,
                 height: 1,
                 color: AppTheme.textPrimary,
               ),
@@ -451,9 +453,9 @@ class _BreatheBodyState extends State<_BreatheBody> with SingleTickerProviderSta
               Text(
                 _left == 0 ? 'Settled' : (inhaling ? 'Breathe in' : 'Breathe out'),
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w500,
-                  fontSize: 26,
+                  fontSize: 21,
                   color: AppTheme.textPrimary,
                 ),
               ),
@@ -527,17 +529,17 @@ class _GlassField extends StatelessWidget {
               textCapitalization: TextCapitalization.sentences,
               cursorColor: AppTheme.gold,
               style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w500,
-                fontSize: 20,
+                fontSize: 16,
                 color: AppTheme.textPrimary,
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: hint,
                 hintStyle: TextStyle(
-                  fontFamily: 'CormorantGaramond',
-                  fontSize: 19,
+                  fontFamily: 'InterDisplay',
+                  fontSize: 15,
                   color: AppTheme.textMuted.withValues(alpha: 0.6),
                 ),
               ),
@@ -593,9 +595,9 @@ class _IntentionBody extends ConsumerWidget {
                       maxLines: 3,
                       cursorColor: AppTheme.gold,
                       style: const TextStyle(
-                        fontFamily: 'CormorantGaramond',
+                        fontFamily: 'InterDisplay',
                         fontWeight: FontWeight.w600,
-                        fontSize: 20,
+                        fontSize: 16,
                         height: 1.2,
                         color: AppTheme.textPrimary,
                       ),
@@ -710,9 +712,9 @@ class _AffirmBodyState extends ConsumerState<_AffirmBody> with SingleTickerProvi
                 '“$text”',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w600,
-                  fontSize: 25,
+                  fontSize: 20,
                   height: 1.2,
                   color: AppTheme.textPrimary,
                 ),
@@ -857,9 +859,9 @@ class _VisualizeBodyState extends ConsumerState<_VisualizeBody> with SingleTicke
           '“$intention”',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'CormorantGaramond',
+            fontFamily: 'InterDisplay',
             fontWeight: FontWeight.w500,
-            fontSize: 17,
+            fontSize: 13.5,
             color: AppTheme.gold.withValues(alpha: 0.9),
           ),
         ),
@@ -892,9 +894,9 @@ class _VisualizeBodyState extends ConsumerState<_VisualizeBody> with SingleTicke
                       Text(
                         sense?.sense ?? 'Done',
                         style: const TextStyle(
-                          fontFamily: 'CormorantGaramond',
+                          fontFamily: 'InterDisplay',
                           fontWeight: FontWeight.w600,
-                          fontSize: 30,
+                          fontSize: 24,
                           height: 1,
                           color: Colors.white,
                         ),
@@ -1036,9 +1038,9 @@ class _ReleaseBodyState extends State<_ReleaseBody> with SingleTickerProviderSta
                       _text.text.trim(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontFamily: 'CormorantGaramond',
+                        fontFamily: 'InterDisplay',
                         fontWeight: FontWeight.w600,
-                        fontSize: 26,
+                        fontSize: 21,
                         color: AppTheme.textPrimary,
                       ),
                     ),
@@ -1056,9 +1058,9 @@ class _ReleaseBodyState extends State<_ReleaseBody> with SingleTickerProviderSta
                       const Text(
                         'Released. Forgiven. Gone.',
                         style: TextStyle(
-                          fontFamily: 'CormorantGaramond',
+                          fontFamily: 'InterDisplay',
                           fontWeight: FontWeight.w600,
-                          fontSize: 26,
+                          fontSize: 21,
                           color: AppTheme.textPrimary,
                         ),
                       ),
@@ -1154,9 +1156,9 @@ class _CompletionCard extends ConsumerWidget {
             const Text(
               'Ritual complete.',
               style: TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w600,
-                fontSize: 38,
+                fontSize: 30.5,
                 height: 1,
                 color: Colors.white,
                 shadows: textOnArt,
@@ -1169,9 +1171,9 @@ class _CompletionCard extends ConsumerWidget {
               Text(
                 text,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w600,
-                  fontSize: 21,
+                  fontSize: 17,
                   height: 1.2,
                   color: Colors.white,
                   shadows: textOnArt,
@@ -1182,8 +1184,8 @@ class _CompletionCard extends ConsumerWidget {
             Text(
               "You don't chase miracles. You become one.",
               style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.w600,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w500,
                 fontSize: 13,
                 color: Colors.white.withValues(alpha: 0.85),
                 shadows: textOnArt,

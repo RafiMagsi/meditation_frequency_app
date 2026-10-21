@@ -61,7 +61,7 @@ class AppTheme {
         surface: surface,
         onSurface: textPrimary,
       ),
-      fontFamily: 'Quicksand',
+      fontFamily: 'Inter',
       splashFactory: InkSparkle.splashFactory,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -78,32 +78,32 @@ class AppTheme {
       textTheme: base.textTheme.apply(
         bodyColor: textPrimary,
         displayColor: textPrimary,
-        fontFamily: 'Quicksand',
+        fontFamily: 'Inter',
       ),
     );
   }
 }
 
-/// Elegant display headline style (Cormorant Garamond).
+/// Display headline style (Inter Display: Inter cut for large sizes).
 const TextStyle displayStyle = TextStyle(
-  fontFamily: 'CormorantGaramond',
+  fontFamily: 'InterDisplay',
   fontWeight: FontWeight.w600,
   color: AppTheme.textPrimary,
   height: 1.05,
 );
 
 const TextStyle mutedStyle = TextStyle(
-  fontFamily: 'Quicksand',
-  fontWeight: FontWeight.w500,
+  fontFamily: 'Inter',
+  fontWeight: FontWeight.w400,
   color: AppTheme.textMuted,
 );
 
-/// Tracked small caps label ("NOW PLAYING", "FOR YOU").
+/// Small caps label ("NOW PLAYING", "FOR YOU"): lightly tracked, crisp.
 TextStyle capsStyle({Color color = AppTheme.textMuted, double size = 11}) => TextStyle(
-      fontFamily: 'Quicksand',
-      fontWeight: FontWeight.w700,
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w600,
       fontSize: size,
-      letterSpacing: size * 0.28,
+      letterSpacing: size * 0.1,
       color: color,
     );
 

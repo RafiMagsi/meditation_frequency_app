@@ -69,7 +69,10 @@ class CardFace extends StatelessWidget {
       _ => Scene.engraved,
     };
     return DecoratedBox(
+      // The base fill shares the shadow's layer: a lone blurred shadow can't
+      // take a fade's opacity in Impeller, so it would pop during transitions.
       decoration: ShapeDecoration(
+        color: const Color(0xFF09090C),
         shape: RoundedSuperellipseBorder(borderRadius: radius),
         shadows: _shadows(elevation),
       ),
@@ -133,7 +136,7 @@ class CardFace extends StatelessWidget {
   Widget _artFace() {
     final radius = BorderRadius.circular(borderRadius);
     return DecoratedBox(
-      decoration: BoxDecoration(borderRadius: radius, boxShadow: _shadows(elevation)),
+      decoration: BoxDecoration(color: style.colors.first, borderRadius: radius, boxShadow: _shadows(elevation)),
       child: ClipRRect(
         borderRadius: radius,
         child: Stack(

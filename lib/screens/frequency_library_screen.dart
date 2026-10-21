@@ -98,9 +98,9 @@ class _ToneCard extends StatelessWidget {
                   '${f.hz} Hz',
                   accent: f.color,
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 25,
+                    fontSize: 20,
                     height: 1,
                   ),
                 ),
@@ -110,8 +110,8 @@ class _ToneCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                     color: AppTheme.ivory,
                   ),

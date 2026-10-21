@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import 'ambient_background.dart';
 import 'card_face.dart';
+import 'cosmic_video.dart';
 import 'deck.dart';
 import 'glass_button.dart';
 import 'medallion.dart';
@@ -66,9 +67,9 @@ class FeatureHeader extends StatelessWidget {
                             title,
                             maxLines: 1,
                             style: const TextStyle(
-                              fontFamily: 'CormorantGaramond',
+                              fontFamily: 'InterDisplay',
                               fontWeight: FontWeight.w600,
-                              fontSize: 36,
+                              fontSize: 29,
                               height: 1,
                               color: AppTheme.ivory,
                             ),
@@ -142,7 +143,8 @@ class FeatureScaffold extends StatelessWidget {
       body: AmbientBackground(
         colors: colors,
         accents: [accent, Color.lerp(accent, AppTheme.pink, 0.5)!],
-        particleCount: 14,
+        video: Cosmos.stars,
+        videoOpacity: 0.6,
         child: SafeArea(
           bottom: false,
           child: body == null

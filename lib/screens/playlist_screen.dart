@@ -126,9 +126,9 @@ class _PlaylistRow extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 21,
+                    fontSize: 17,
                     height: 1.05,
                     color: AppTheme.textPrimary,
                   ),

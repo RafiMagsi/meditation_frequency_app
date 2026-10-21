@@ -3,9 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'cosmic_video.dart';
 
 /// Full-screen living background: a slowly breathing aurora gradient
-/// with drifting light particles. Used behind welcome, home and player.
+/// with drifting light particles, or a cosmic film tinted by the aurora.
+/// Used behind welcome, home, every feature screen and the players.
 class AmbientBackground extends StatefulWidget {
   const AmbientBackground({
     super.key,
@@ -18,6 +20,9 @@ class AmbientBackground extends StatefulWidget {
     this.accents = const [AppTheme.violet, AppTheme.pink],
     this.particleCount = 22,
     this.showParticles = true,
+    this.video,
+    this.videoOpacity = 0.7,
+    this.videoScrim = 0,
   });
 
   final Widget child;
@@ -26,7 +31,17 @@ class AmbientBackground extends StatefulWidget {
   /// The two aurora blob tints.
   final List<Color> accents;
   final int particleCount;
+
+  /// Drifting motes; a film brings its own stars, so they stay off then.
   final bool showParticles;
+
+  /// A cosmic film between the gradient and the aurora tint.
+  final Cosmos? video;
+  final double videoOpacity;
+
+  /// Darkens the film toward the bottom (and a little at the top) so type
+  /// stays legible over bright footage. 0 = none.
+  final double videoScrim;
 
   @override
   State<AmbientBackground> createState() => _AmbientBackgroundState();
@@ -47,52 +62,69 @@ class _AmbientBackgroundState extends State<AmbientBackground>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final t = _controller.value;
-        // Aurora blob centers drift on slow lissajous paths.
-        final c1 = Offset(
-          0.25 + 0.12 * math.sin(t * 2 * math.pi),
-          0.18 + 0.08 * math.cos(t * 2 * math.pi * 1.3),
-        );
-        final c2 = Offset(
-          0.78 + 0.10 * math.cos(t * 2 * math.pi * 0.8),
-          0.72 + 0.10 * math.sin(t * 2 * math.pi * 1.1),
-        );
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.colors,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+    final video = widget.video;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: widget.colors,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        if (video != null) CosmicVideo(video, opacity: widget.videoOpacity),
+        if (video != null && widget.videoScrim > 0)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  widget.colors.last.withValues(alpha: widget.videoScrim * 0.5),
+                  widget.colors.last.withValues(alpha: 0),
+                  widget.colors.last.withValues(alpha: widget.videoScrim),
+                ],
+                stops: const [0, 0.3, 1],
               ),
             ),
-            // Soft aurora blobs.
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _AuroraPainter(
-                  blob1Center: c1,
-                  blob2Center: c2,
-                  blob1Color: widget.accents[0].withValues(alpha: 0.16 + 0.05 * math.sin(t * 2 * math.pi)),
-                  blob2Color: widget.accents[1].withValues(alpha: 0.12 + 0.04 * math.cos(t * 2 * math.pi)),
-                ),
-              ),
+          ),
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final t = _controller.value;
+                // Aurora blob centers drift on slow lissajous paths.
+                final c1 = Offset(
+                  0.25 + 0.12 * math.sin(t * 2 * math.pi),
+                  0.18 + 0.08 * math.cos(t * 2 * math.pi * 1.3),
+                );
+                final c2 = Offset(
+                  0.78 + 0.10 * math.cos(t * 2 * math.pi * 0.8),
+                  0.72 + 0.10 * math.sin(t * 2 * math.pi * 1.1),
+                );
+                // Over a film the aurora only tints, so it stays fainter.
+                final a = video == null ? 1.0 : 0.6;
+                return CustomPaint(
+                  painter: _AuroraPainter(
+                    blob1Center: c1,
+                    blob2Center: c2,
+                    blob1Color: widget.accents[0].withValues(alpha: (0.16 + 0.05 * math.sin(t * 2 * math.pi)) * a),
+                    blob2Color: widget.accents[1].withValues(alpha: (0.12 + 0.04 * math.cos(t * 2 * math.pi)) * a),
+                  ),
+                  foregroundPainter: widget.showParticles && video == null
+                      ? _ParticlesPainter(t, count: widget.particleCount)
+                      : null,
+                );
+              },
             ),
-            if (widget.showParticles)
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _ParticlesPainter(t, count: widget.particleCount),
-                ),
-              ),
-            widget.child,
-          ],
-        );
-      },
+          ),
+        ),
+        widget.child,
+      ],
     );
   }
 }

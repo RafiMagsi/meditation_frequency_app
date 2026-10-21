@@ -146,9 +146,9 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                         Text(
                           _fmt(_secondsLeft),
                           style: const TextStyle(
-                            fontFamily: 'CormorantGaramond',
+                            fontFamily: 'InterDisplay',
                             fontWeight: FontWeight.w600,
-                            fontSize: 58,
+                            fontSize: 46.5,
                             height: 1,
                             color: AppTheme.textPrimary,
                             fontFeatures: [FontFeature.tabularFigures()],
@@ -198,9 +198,9 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                             Text(
                               '$m',
                               style: TextStyle(
-                                fontFamily: 'CormorantGaramond',
+                                fontFamily: 'InterDisplay',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 22,
+                                fontSize: 17.5,
                                 height: 1,
                                 color: _minutes == m ? AppTheme.ivory : AppTheme.textPrimary,
                               ),

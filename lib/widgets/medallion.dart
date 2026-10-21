@@ -149,9 +149,9 @@ class EmblemMedallion extends StatelessWidget {
                     : Text(
                         text ?? '',
                         style: TextStyle(
-                          fontFamily: 'CormorantGaramond',
-                          fontWeight: FontWeight.w700,
-                          fontSize: size * 0.3,
+                          fontFamily: 'InterDisplay',
+                          fontWeight: FontWeight.w600,
+                          fontSize: (size * 0.3) * 0.8,
                           letterSpacing: size * 0.01,
                           color: Colors.white,
                         ),

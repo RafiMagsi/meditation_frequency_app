@@ -6,9 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:meditation_frequency_app/main.dart';
+import 'package:meditation_frequency_app/screens/speak_session_screen.dart';
 import 'package:meditation_frequency_app/services/practice_store.dart';
 import 'package:meditation_frequency_app/services/tone_playback.dart';
 import 'package:meditation_frequency_app/services/voice.dart';
+import 'package:meditation_frequency_app/widgets/cosmic_video.dart';
 
 /// Records what the voice guide would say.
 class FakeVoiceGuide implements VoiceGuide {
@@ -87,7 +89,10 @@ Future<void> openHub(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(() => TonePlayback.simulateAudio = true);
+  setUpAll(() {
+    TonePlayback.simulateAudio = true;
+    CosmicVideo.enabled = false;
+  });
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('Welcome deals the card hub, and a card opens its screen', (tester) async {
@@ -290,6 +295,19 @@ void main() {
     await settle(tester);
   }
 
+  test('Speech matching reads numbers, money and contractions the same way', () {
+    final target = spokenTokens(r'I am making $10,000 a month.');
+    expect(target, ['i', 'am', 'making', '10000', 'a', 'month']);
+    expect(spokenTokens("I'm making ten thousand dollars a month"), [...target.take(4), 'dollars', ...target.skip(4)]);
+    expect(spokenTokens('I’m making 10 thousand'), target.take(4));
+    expect(spokenTokens('10K'), ['10000']);
+    expect(spokenTokens('a hundred and five, twenty one'), ['a', '105', '21']);
+    expect(spokenTokens('ten thousand five hundred'), ['10500']);
+    expect(spokenTokens('one two three'), ['1', '2', '3']);
+    expect(spokenTokens('a million dollars and more'), ['a', '1000000', 'dollars', 'and', 'more']);
+    expect(spokenTokens(r'$10,000.50'), ['10000', '50']);
+  });
+
   testWidgets('Spoken affirmations only count once the words are heard', (tester) async {
     await openHub(tester);
     await openVoice(tester, 'Spoken Affirmations');
@@ -314,6 +332,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1300));
     expect(speech.listening, isTrue);
     expect(find.text('LISTENING…'), findsOneWidget);
+
+    // However the engine writes it down, the same words count.
+    speech.say("I'm making ten thousand dollars a month with app development");
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('AFFIRMED · 2 OF 3'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1300));
   });
 
   testWidgets('Gratitude aloud writes the spoken words into the journal', (tester) async {

@@ -374,7 +374,7 @@ final breathPatternsProvider = Provider<List<BreathPattern>>((_) => const [
       BreathPattern(
         id: 'nadi',
         name: 'Alternate Nostril',
-        rhythm: '4 · 4 · 4  L ⇄ R',
+        rhythm: '4 · 4 · 4  L / R',
         benefit: 'Balance and clear the mind',
         why:
             'Nadi shodhana: slow breathing through one nostril at a time calms the nervous system and steadies attention.',

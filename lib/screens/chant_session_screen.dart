@@ -11,6 +11,7 @@ import '../services/practice_store.dart';
 import '../services/voice.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -186,7 +187,8 @@ class _ChantSessionScreenState extends ConsumerState<ChantSessionScreen> with Si
       body: AmbientBackground(
         colors: [Color.lerp(AppTheme.bgTop, _color, 0.12)!, AppTheme.bgTop, const Color(0xFF09080D)],
         accents: [_color, Color.lerp(_color, AppTheme.violet, 0.5)!],
-        particleCount: 12,
+        video: Cosmos.stars,
+        videoOpacity: 0.6,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
@@ -233,9 +235,9 @@ class _ChantSessionScreenState extends ConsumerState<ChantSessionScreen> with Si
                             Text(
                               words.title,
                               style: const TextStyle(
-                                fontFamily: 'CormorantGaramond',
+                                fontFamily: 'InterDisplay',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 32,
+                                fontSize: 25.5,
                                 height: 1,
                                 color: AppTheme.ivory,
                               ),
@@ -319,9 +321,9 @@ class _Syllables extends StatelessWidget {
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 300),
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 38,
+              fontSize: 30.5,
               height: 1,
               color: progress > i / letters.length + 0.001 ? AppTheme.ivory : AppTheme.ivory.withValues(alpha: 0.2),
               shadows: progress > i / letters.length + 0.001

@@ -13,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breath_visual.dart';
 import '../widgets/card_face.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -185,7 +186,8 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
       body: AmbientBackground(
         colors: [Color.lerp(AppTheme.bgTop, color, 0.2)!, const Color(0xFF080A1C), const Color(0xFF05060F)],
         accents: [color, Color.lerp(color, AppTheme.violet, 0.5)!],
-        particleCount: 14,
+        video: Cosmos.stars,
+        videoOpacity: 0.55,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -330,9 +332,9 @@ class _BreathSessionScreenState extends ConsumerState<BreathSessionScreen> with 
                                   maxLines: 3,
                                   style: started && !_done
                                       ? const TextStyle(
-                                          fontFamily: 'CormorantGaramond',
+                                          fontFamily: 'InterDisplay',
                                           fontWeight: FontWeight.w500,
-                                          fontSize: 22,
+                                          fontSize: 17.5,
                                           height: 1.15,
                                           color: AppTheme.textPrimary,
                                         )
@@ -449,9 +451,9 @@ class _Header extends StatelessWidget {
                   pattern.name,
                   maxLines: 1,
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 26,
+                    fontSize: 21,
                     height: 1,
                     color: Colors.white,
                   ),
@@ -467,9 +469,9 @@ class _Header extends StatelessWidget {
             Text(
               remaining,
               style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w600,
-                fontSize: 28,
+                fontSize: 22.5,
                 height: 1,
                 color: Colors.white,
                 fontFeatures: [FontFeature.tabularFigures()],
@@ -518,9 +520,9 @@ class _Readout extends StatelessWidget {
                   word!,
                   key: ValueKey('w$word'),
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 26,
+                    fontSize: 21,
                     height: 1,
                     color: Colors.white,
                     shadows: shadow,
@@ -543,9 +545,9 @@ class _Readout extends StatelessWidget {
             number,
             key: ValueKey(number),
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w500,
-              fontSize: large ? 76 : 46,
+              fontSize: (large ? 76 : 46) * 0.8,
               height: 1,
               color: Colors.white,
               shadows: shadow,
@@ -676,9 +678,9 @@ class _CompletionCard extends ConsumerWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w600,
-                  fontSize: 28,
+                  fontSize: 22.5,
                   height: 1,
                   color: Colors.white,
                 ),
@@ -697,9 +699,9 @@ class _CompletionCard extends ConsumerWidget {
           const Text(
             'Beautifully done.',
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 30,
+              fontSize: 24,
               height: 1,
               color: Colors.white,
             ),

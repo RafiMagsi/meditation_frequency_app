@@ -147,8 +147,8 @@ class _MoodTile extends StatelessWidget {
                 Text(
                   mood.label,
                   style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                     color: selected ? AppTheme.ivory : AppTheme.textMuted,
                   ),
@@ -213,9 +213,9 @@ class _SuggestionCard extends StatelessWidget {
           Text(
             mood.tip,
             style: const TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 25,
+              fontSize: 20,
               height: 1.15,
               color: AppTheme.ivory,
             ),

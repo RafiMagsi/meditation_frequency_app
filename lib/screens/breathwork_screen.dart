@@ -88,9 +88,9 @@ class _RecommendedCard extends StatelessWidget {
                     p.name,
                     maxLines: 1,
                     style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
+                      fontFamily: 'InterDisplay',
                       fontWeight: FontWeight.w600,
-                      fontSize: 30,
+                      fontSize: 24,
                       height: 1,
                       color: AppTheme.ivory,
                     ),
@@ -165,9 +165,9 @@ class _PatternCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 25,
+                    fontSize: 20,
                     height: 1,
                     color: AppTheme.ivory,
                   ),
@@ -265,9 +265,9 @@ class _ScienceCard extends StatelessWidget {
           const Text(
             'The one part of your nervous system you can steer on purpose.',
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 21,
+              fontSize: 17,
               height: 1.15,
               color: AppTheme.textPrimary,
             ),
@@ -293,8 +293,8 @@ class _ScienceCard extends StatelessWidget {
                         Text(
                           title,
                           style: const TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600,
                             fontSize: 13.5,
                             color: AppTheme.textPrimary,
                           ),

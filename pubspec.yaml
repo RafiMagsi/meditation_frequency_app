@@ -14,6 +14,7 @@ dependencies:
   record: ^6.2.1
   shared_preferences: ^2.5.6
   speech_to_text: ^7.4.0
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:
@@ -26,10 +27,26 @@ flutter:
     - assets/audio/
     - assets/images/
     - assets/images/cards/
+    - assets/videos/
   fonts:
-    - family: CormorantGaramond
+    # Inter (SIL Open Font License, see assets/fonts/inter/OFL.txt):
+    # static weights so every weight renders crisply.
+    - family: Inter
       fonts:
-        - asset: assets/fonts/CormorantGaramond.ttf
-    - family: Quicksand
+        - asset: assets/fonts/inter/Inter-Regular.ttf
+        - asset: assets/fonts/inter/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/inter/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/inter/Inter-Bold.ttf
+          weight: 700
+    # Inter Display: the same design cut for large sizes.
+    - family: InterDisplay
       fonts:
-        - asset: assets/fonts/Quicksand.ttf
+        - asset: assets/fonts/inter/InterDisplay-Regular.ttf
+        - asset: assets/fonts/inter/InterDisplay-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/inter/InterDisplay-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/inter/InterDisplay-Bold.ttf
+          weight: 700

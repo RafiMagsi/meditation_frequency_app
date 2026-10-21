@@ -120,8 +120,8 @@ class ActionPill extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
                       fontSize: 14,
                       color: AppTheme.ivory,
                     ),
@@ -373,9 +373,9 @@ class _CoinFacePainter extends CustomPainter {
             text: TextSpan(
               text: text,
               style: TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: weight,
-                fontSize: fontSize,
+                fontSize: (fontSize) * 0.8,
                 letterSpacing: spacing,
                 color: color,
                 height: 1,
@@ -421,6 +421,7 @@ class GuillocheDial extends StatelessWidget {
     this.accent = AppTheme.goldMid,
     this.innerRadiusFactor = 0.6,
     this.marks = const [],
+    this.plate = 1,
     this.child,
   });
 
@@ -434,6 +435,10 @@ class GuillocheDial extends StatelessWidget {
 
   /// Where the engraving stops, as a fraction of the dial radius.
   final double innerRadiusFactor;
+
+  /// How solid the dial plate is. Lower makes it smoked crystal, so a
+  /// [GalaxyWindow] beneath shows through.
+  final double plate;
   final Widget? child;
 
   @override
@@ -447,6 +452,7 @@ class GuillocheDial extends StatelessWidget {
           accent: accent,
           inner: innerRadiusFactor,
           marks: marks,
+          plate: plate,
         ),
         child: Center(child: child),
       ),
@@ -461,6 +467,7 @@ class _DialPainter extends CustomPainter {
     required this.accent,
     required this.inner,
     this.marks = const [],
+    this.plate = 1,
   });
 
   final double progress;
@@ -468,6 +475,7 @@ class _DialPainter extends CustomPainter {
   final Color accent;
   final double inner;
   final List<double> marks;
+  final double plate;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -482,9 +490,9 @@ class _DialPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            const Color(0xFF15131A),
-            const Color(0xFF0B0A0E),
-            Color.lerp(const Color(0xFF0B0A0E), accent, 0.06)!,
+            const Color(0xFF15131A).withValues(alpha: plate),
+            const Color(0xFF0B0A0E).withValues(alpha: plate),
+            Color.lerp(const Color(0xFF0B0A0E), accent, 0.06)!.withValues(alpha: plate),
           ],
           stops: const [0, 0.8, 1],
         ).createShader(rect),
@@ -598,5 +606,10 @@ class _DialPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DialPainter old) =>
-      old.progress != progress || old.rotation != rotation || old.accent != accent || old.marks != marks;
+      old.progress != progress ||
+      old.rotation != rotation ||
+      old.accent != accent ||
+      old.marks != marks ||
+      old.inner != inner ||
+      old.plate != plate;
 }

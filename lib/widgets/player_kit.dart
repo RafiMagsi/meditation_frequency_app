@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
+import 'cosmic_video.dart';
 import 'glass_button.dart';
 import 'luxury.dart';
 import 'scene_art.dart';
@@ -60,6 +61,30 @@ class RouteReveal extends StatelessWidget {
           child: Transform.scale(scale: 0.86 + 0.14 * t, child: child),
         );
       },
+    );
+  }
+}
+
+/// The dial's astronomical complication: a slowly turning galaxy seen
+/// through the guilloché, its core behind the jewel. Brighter in play.
+class GalaxyWindow extends StatelessWidget {
+  const GalaxyWindow({super.key, required this.size, required this.bright});
+
+  final double size;
+  final bool bright;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (rect) => const RadialGradient(
+          colors: [Colors.white, Colors.white, Colors.transparent],
+          stops: [0, 0.72, 1],
+        ).createShader(rect),
+        child: CosmicVideo(Cosmos.galaxy, opacity: bright ? 1 : 0.75),
+      ),
     );
   }
 }
@@ -468,9 +493,9 @@ class BreathCue extends StatelessWidget {
             key: ValueKey(text),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w500,
-              fontSize: active ? 19 : 15,
+              fontSize: (active ? 19 : 15) * 0.8,
               letterSpacing: 0.4,
               color: active ? AppTheme.champagne : AppTheme.taupe,
             ),

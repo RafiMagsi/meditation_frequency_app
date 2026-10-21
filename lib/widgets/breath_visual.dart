@@ -433,9 +433,9 @@ class PhaseStrip extends StatelessWidget {
                         TextSpan(
                           text: ' ${phaseSeconds(phases[i].seconds)}s',
                           style: TextStyle(
-                            fontFamily: 'CormorantGaramond',
-                            fontWeight: FontWeight.w700,
-                            fontSize: large ? 15 : 13,
+                            fontFamily: 'InterDisplay',
+                            fontWeight: FontWeight.w600,
+                            fontSize: (large ? 15 : 13) * 0.8,
                             color: i == current ? Colors.white : Colors.white.withValues(alpha: 0.75),
                           ),
                         ),

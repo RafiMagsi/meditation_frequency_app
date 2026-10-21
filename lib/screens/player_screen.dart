@@ -13,6 +13,7 @@ import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breathing_orb.dart';
 import '../widgets/card_face.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -207,7 +208,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with TickerProvider
       body: AmbientBackground(
         colors: const [Color(0xFF0E0C12), AppTheme.onyx, Color(0xFF0B0A0D)],
         accents: [widget.color, AppTheme.goldDeep],
-        particleCount: 12,
+        video: Cosmos.stars,
+        videoOpacity: 0.45,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) => ListenableBuilder(
@@ -241,11 +243,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with TickerProvider
                       const Spacer(),
                       AnimatedBuilder(
                         animation: Listenable.merge([_turn, _breath]),
-                        builder: (context, _) {
+                        child: RouteReveal(child: GalaxyWindow(size: dial, bright: playing)),
+                        builder: (context, galaxy) {
                           final b = Curves.easeInOut.transform(_breath.value);
                           return Stack(
                             alignment: Alignment.center,
                             children: [
+                              galaxy!,
                               RouteReveal(
                                 child: GuillocheDial(
                                   size: dial,
@@ -253,6 +257,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with TickerProvider
                                   rotation: _turn.value * 2 * math.pi,
                                   innerRadiusFactor: 0.66,
                                   marks: _starts,
+                                  plate: 0.18,
                                 ),
                               ),
                               Transform.scale(
@@ -275,9 +280,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> with TickerProvider
                                 maxLines: 1,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontFamily: 'CormorantGaramond',
+                                  fontFamily: 'InterDisplay',
                                   fontWeight: FontWeight.w500,
-                                  fontSize: session == null ? 40 : 36,
+                                  fontSize: (session == null ? 40 : 36) * 0.8,
                                   height: 1,
                                   letterSpacing: 0.3,
                                   color: AppTheme.ivory,
@@ -487,9 +492,9 @@ class _GuideCaption extends StatelessWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w500,
-                  fontSize: 21,
+                  fontSize: 17,
                   height: 1.22,
                   color: AppTheme.ivory,
                 ),
@@ -530,9 +535,9 @@ class _SessionComplete extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w500,
-              fontSize: 21,
+              fontSize: 17,
               height: 1.2,
               color: AppTheme.ivory,
             ),

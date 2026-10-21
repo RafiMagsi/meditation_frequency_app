@@ -63,9 +63,9 @@ class _FrequencyMeterScreenState extends State<FrequencyMeterScreen> with Single
                     Text(
                       '${(_level * 100).round()}%',
                       style: const TextStyle(
-                        fontFamily: 'CormorantGaramond',
+                        fontFamily: 'InterDisplay',
                         fontWeight: FontWeight.w600,
-                        fontSize: 34,
+                        fontSize: 27,
                         height: 1,
                         color: AppTheme.textPrimary,
                         fontFeatures: [FontFeature.tabularFigures()],

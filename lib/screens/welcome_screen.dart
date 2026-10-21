@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breathing_orb.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/seamless_route.dart';
 import 'home_screen.dart';
 
@@ -44,6 +45,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       body: AmbientBackground(
+        video: Cosmos.flight,
+        videoOpacity: 0.85,
+        videoScrim: 0.75,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -74,8 +78,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         Text(
                           'MEDITATION',
                           style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
                             fontSize: 13,
                             letterSpacing: 7,
                             color: AppTheme.textMuted.withValues(alpha: 0.9),
@@ -85,9 +89,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         const Text(
                           '& Frequency',
                           style: TextStyle(
-                            fontFamily: 'CormorantGaramond',
+                            fontFamily: 'InterDisplay',
                             fontWeight: FontWeight.w600,
-                            fontSize: 52,
+                            fontSize: 41.5,
                             height: 1,
                             color: AppTheme.textPrimary,
                           ),
@@ -157,8 +161,8 @@ class _BeginButton extends StatelessWidget {
                   Text(
                     'Begin',
                     style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
                       fontSize: 17,
                       color: AppTheme.ivory,
                       letterSpacing: 0.5,

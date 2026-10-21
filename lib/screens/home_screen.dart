@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/breathing_orb.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glow_card.dart';
 import '../widgets/luxury.dart';
@@ -65,6 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AmbientBackground(
+        video: Cosmos.galaxies,
+        videoOpacity: 0.6,
+        videoScrim: 0.4,
         child: SafeArea(
           bottom: false,
           child: ListView(
@@ -270,9 +274,9 @@ class _RitualCard extends ConsumerWidget {
                     ritual.name,
                     maxLines: 1,
                     style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
+                      fontFamily: 'InterDisplay',
                       fontWeight: FontWeight.w600,
-                      fontSize: 27,
+                      fontSize: 21.5,
                       height: 1,
                       color: AppTheme.ivory,
                     ),
@@ -319,9 +323,9 @@ class _Header extends ConsumerWidget {
               const Text(
                 'Tune in',
                 style: TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w600,
-                  fontSize: 34,
+                  fontSize: 27,
                   height: 1,
                   color: AppTheme.textPrimary,
                 ),
@@ -390,9 +394,9 @@ class _AbundanceCard extends StatelessWidget {
             child: GoldText(
               'Money Manifestation',
               style: TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w600,
-                fontSize: 30,
+                fontSize: 24,
                 height: 1,
               ),
             ),
@@ -403,8 +407,8 @@ class _AbundanceCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontFamily: 'Quicksand',
-              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w500,
               fontSize: 11.5,
               color: AppTheme.ivory.withValues(alpha: 0.8),
             ),
@@ -469,9 +473,9 @@ class _FeatureCard extends StatelessWidget {
               title,
               maxLines: 2,
               style: const TextStyle(
-                fontFamily: 'CormorantGaramond',
+                fontFamily: 'InterDisplay',
                 fontWeight: FontWeight.w600,
-                fontSize: 24,
+                fontSize: 19,
                 height: 1.02,
                 color: AppTheme.ivory,
               ),

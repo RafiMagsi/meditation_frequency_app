@@ -154,9 +154,9 @@ class _TodaysPick extends StatelessWidget {
                           m.title,
                           maxLines: 1,
                           style: const TextStyle(
-                            fontFamily: 'CormorantGaramond',
+                            fontFamily: 'InterDisplay',
                             fontWeight: FontWeight.w600,
-                            fontSize: 32,
+                            fontSize: 25.5,
                             height: 1,
                             color: AppTheme.ivory,
                           ),
@@ -283,7 +283,7 @@ class _Meta extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontFamily: 'Quicksand', fontWeight: FontWeight.w700, fontSize: 11.5, color: c),
+            style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w600, fontSize: 11.5, color: c),
           ),
         ),
       ],
@@ -332,8 +332,8 @@ class _CategoryChips extends StatelessWidget {
                       Text(
                         c,
                         style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
                           fontSize: 13,
                           color: c == selected ? AppTheme.ivory : AppTheme.textMuted,
                         ),
@@ -342,8 +342,8 @@ class _CategoryChips extends StatelessWidget {
                       Text(
                         '${counts[c] ?? 0}',
                         style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
                           fontSize: 11,
                           color: c == selected
                               ? Color.lerp(CardStyles.guided.glow, Colors.white, 0.3)
@@ -406,9 +406,9 @@ class _SessionRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
+                    fontFamily: 'InterDisplay',
                     fontWeight: FontWeight.w600,
-                    fontSize: 23,
+                    fontSize: 18.5,
                     height: 1,
                     color: AppTheme.ivory,
                   ),
@@ -469,9 +469,9 @@ class _InnerLakeCard extends StatelessWidget {
                     'Inner Lake',
                     maxLines: 1,
                     style: TextStyle(
-                      fontFamily: 'CormorantGaramond',
+                      fontFamily: 'InterDisplay',
                       fontWeight: FontWeight.w600,
-                      fontSize: 27,
+                      fontSize: 21.5,
                       height: 1,
                       color: AppTheme.ivory,
                     ),

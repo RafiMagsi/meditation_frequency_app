@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../theme/card_styles.dart';
 import '../widgets/ambient_background.dart';
 import '../widgets/card_face.dart';
+import '../widgets/cosmic_video.dart';
 import '../widgets/deck.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/luxury.dart';
@@ -131,7 +132,8 @@ class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen> with Tick
       body: AmbientBackground(
         colors: const [Color(0xFF110E08), AppTheme.onyx, Color(0xFF0B0A08)],
         accents: const [AppTheme.goldMid, AppTheme.goldDeep],
-        particleCount: 16,
+        video: Cosmos.stars,
+        videoOpacity: 0.4,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -185,9 +187,9 @@ class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen> with Tick
                             GoldText(
                               '${f.hz} Hz',
                               style: const TextStyle(
-                                fontFamily: 'CormorantGaramond',
+                                fontFamily: 'InterDisplay',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 38,
+                                fontSize: 30.5,
                                 height: 1,
                               ),
                             ),
@@ -221,9 +223,9 @@ class _MoneyPlayerScreenState extends ConsumerState<MoneyPlayerScreen> with Tick
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     style: const TextStyle(
-                                      fontFamily: 'CormorantGaramond',
+                                      fontFamily: 'InterDisplay',
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 21,
+                                      fontSize: 17,
                                       height: 1.15,
                                       color: AppTheme.ivory,
                                     ),
@@ -403,9 +405,9 @@ class _TickerPainter extends CustomPainter {
   bool shouldRepaint(_TickerPainter old) => old.offset != offset || old.live != live;
 }
 
-/// ▲ and ◆ exist in Cormorant but not in Quicksand.
+/// ▲ and ◆ drawn in the display face, a touch heavier than the caps.
 TextStyle _glyph(Color color, double size) =>
-    TextStyle(fontFamily: 'CormorantGaramond', fontWeight: FontWeight.w700, fontSize: size, color: color);
+    TextStyle(fontFamily: 'InterDisplay', fontWeight: FontWeight.w600, fontSize: (size) * 0.8, color: color);
 
 /// The Abundance Index: a value that climbs while the tone plays, its
 /// change since the session opened, and a gold sparkline.
@@ -473,9 +475,9 @@ class _AbundanceIndex extends StatelessWidget {
                         GoldText(
                           _money(value),
                           style: const TextStyle(
-                            fontFamily: 'CormorantGaramond',
+                            fontFamily: 'InterDisplay',
                             fontWeight: FontWeight.w600,
-                            fontSize: 27,
+                            fontSize: 21.5,
                             height: 1,
                             fontFeatures: [FontFeature.liningFigures(), FontFeature.tabularFigures()],
                           ),

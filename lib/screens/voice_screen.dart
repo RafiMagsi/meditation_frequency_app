@@ -98,9 +98,9 @@ class _VoiceCard extends StatelessWidget {
                     p.name,
                     maxLines: 1,
                     style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
+                      fontFamily: 'InterDisplay',
                       fontWeight: FontWeight.w600,
-                      fontSize: 25,
+                      fontSize: 20,
                       height: 1,
                       color: AppTheme.ivory,
                     ),
@@ -166,9 +166,9 @@ class VoiceHeader extends StatelessWidget {
                     p.name,
                     maxLines: 1,
                     style: const TextStyle(
-                      fontFamily: 'CormorantGaramond',
+                      fontFamily: 'InterDisplay',
                       fontWeight: FontWeight.w600,
-                      fontSize: 26,
+                      fontSize: 21,
                       height: 1,
                       color: AppTheme.ivory,
                     ),
@@ -209,9 +209,9 @@ class VoiceCompletion extends ConsumerWidget {
           const Text(
             'Beautifully done.',
             style: TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 30,
+              fontSize: 24,
               height: 1,
               color: AppTheme.ivory,
             ),

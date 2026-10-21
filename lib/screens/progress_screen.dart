@@ -121,8 +121,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> with SingleTick
                 child: Text(
                   'Saturday is your power day — 22 minutes of deep calm.',
                   style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
                     fontSize: 13.5,
                     height: 1.35,
                     color: Colors.white,
@@ -176,9 +176,9 @@ class _JournalCard extends StatelessWidget {
               Text(
                 e.text,
                 style: const TextStyle(
-                  fontFamily: 'CormorantGaramond',
+                  fontFamily: 'InterDisplay',
                   fontWeight: FontWeight.w600,
-                  fontSize: 19,
+                  fontSize: 15,
                   height: 1.2,
                   color: AppTheme.textPrimary,
                 ),
@@ -225,9 +225,9 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontFamily: 'CormorantGaramond',
+              fontFamily: 'InterDisplay',
               fontWeight: FontWeight.w600,
-              fontSize: 32,
+              fontSize: 25.5,
               height: 1,
               color: AppTheme.textPrimary,
             ),
@@ -279,10 +279,10 @@ class _WeekChartPainter extends CustomPainter {
         text: TextSpan(
           text: labels[i],
           style: TextStyle(
-            fontFamily: 'Quicksand',
+            fontFamily: 'Inter',
             color: i == best ? AppTheme.gold : AppTheme.textMuted.withValues(alpha: 0.9),
             fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
         textDirection: TextDirection.ltr,
