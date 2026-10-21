@@ -24,20 +24,37 @@ class FakeVoiceGuide implements VoiceGuide {
 /// Speech the test "speaks" with [say].
 class FakeSpeech implements SpeechInput {
   void Function(Heard heard)? _onHeard;
+  void Function()? _onDone;
   bool listening = false;
+  bool held = false;
   @override
   Future<bool> init() async => true;
   @override
   Future<void> listen(
       {required void Function(Heard heard) onHeard,
       void Function(double level)? onLevel,
+      void Function()? onLive,
       void Function()? onDone}) async {
     _onHeard = onHeard;
+    _onDone = onDone;
     listening = true;
+    held = false;
+    onLive?.call();
   }
 
   @override
-  Future<void> stop() async => listening = false;
+  void holdOpen() => held = true;
+
+  /// Ends the session, as the device does after a pause.
+  @override
+  Future<void> stop() async {
+    if (!listening) return;
+    listening = false;
+    held = false;
+    final done = _onDone;
+    _onDone = null;
+    done?.call();
+  }
 
   void say(String words, {bool done = false}) => _onHeard?.call((words: words, done: done));
 }
@@ -311,8 +328,18 @@ void main() {
   testWidgets('Spoken affirmations only count once the words are heard', (tester) async {
     await openHub(tester);
     await openVoice(tester, 'Spoken Affirmations');
-    expect(find.text('TAP THE MICROPHONE AND SPEAK'), findsOneWidget);
+    expect(find.text('TAP OR HOLD THE MICROPHONE TO SPEAK'), findsOneWidget);
 
+    // A tap keeps listening after the finger lifts…
+    await tester.tap(find.byKey(const Key('mic')));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(speech.listening, isTrue);
+    expect(find.text('LISTENING…'), findsOneWidget);
+
+    // …until a long silence, which says so rather than just resetting.
+    await speech.stop();
+    await tester.pump();
+    expect(find.text("DIDN'T CATCH THAT — TRY AGAIN"), findsOneWidget);
     await tester.tap(find.byKey(const Key('mic')));
     await tester.pump();
     expect(find.text('LISTENING…'), findsOneWidget);
@@ -345,9 +372,11 @@ void main() {
     await openHub(tester);
     await openVoice(tester, 'Gratitude Aloud');
 
+    // One tap, then it listens for each prompt by itself.
+    await tester.tap(find.byKey(const Key('mic')));
+    await tester.pump();
     for (final words in ['the sunrise over the hills', 'my mother and her patience', 'how I keep showing up']) {
-      await tester.tap(find.byKey(const Key('mic')));
-      await tester.pump();
+      expect(speech.listening, isTrue);
       speech.say(words, done: true);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1400));
@@ -356,6 +385,58 @@ void main() {
     expect(find.text('Beautifully done.'), findsOneWidget);
     final journal = container.read(practiceProvider).journal.map((e) => e.text);
     expect(journal, containsAll(['the sunrise over the hills', 'my mother and her patience', 'how I keep showing up']));
+  });
+
+  testWidgets('Holding the microphone listens until you let go', (tester) async {
+    await openHub(tester);
+    await openVoice(tester, 'Gratitude Aloud');
+
+    // Listening starts as the finger lands…
+    final press = await tester.startGesture(tester.getCenter(find.byKey(const Key('mic'))));
+    await tester.pump();
+    expect(speech.listening, isTrue);
+
+    // …and stays open through pauses for as long as it is held.
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(speech.held, isTrue);
+    expect(find.text('LISTENING · LET GO WHEN DONE'), findsOneWidget);
+    speech.say('the smell of rain');
+    await tester.pump(const Duration(seconds: 5));
+    expect(speech.listening, isTrue);
+
+    // Letting go ends it, and what was said is the answer.
+    await press.up();
+    await tester.pump();
+    expect(speech.listening, isFalse);
+    expect(find.text('RECEIVED'), findsOneWidget);
+
+    // Someone holding to talk presses again for the next prompt.
+    await tester.pump(const Duration(milliseconds: 1400));
+    expect(speech.listening, isFalse);
+    expect(find.text('PROMPT 2 OF 3'), findsOneWidget);
+    expect(find.text('TAP OR HOLD THE MICROPHONE TO SPEAK'), findsOneWidget);
+  });
+
+  testWidgets('Holding through an affirmation listens on for the next', (tester) async {
+    await openHub(tester);
+    await openVoice(tester, 'Spoken Affirmations');
+
+    final press = await tester.startGesture(tester.getCenter(find.byKey(const Key('mic'))));
+    await tester.pump(const Duration(milliseconds: 400));
+    speech.say('I am making 10,000 a month with app development');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('AFFIRMED · 1 OF 3'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1000));
+    expect(speech.listening, isTrue);
+    expect(speech.held, isTrue);
+    expect(find.text('LISTENING · LET GO WHEN DONE'), findsOneWidget);
+
+    await press.up();
+    await tester.pump();
+    expect(speech.listening, isFalse);
+    expect(find.text('TAP OR HOLD THE MICROPHONE TO SPEAK'), findsOneWidget);
   });
 
   testWidgets('Om chant counts a round only after a sustained Aum', (tester) async {

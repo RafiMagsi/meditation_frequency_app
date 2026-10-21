@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -9,63 +10,116 @@ import 'luxury.dart';
 
 /// The microphone control: a foil ring around an onyx centre, with ripples
 /// that swell with the live [level] while listening.
-class MicButton extends StatelessWidget {
+///
+/// Listening starts as the finger lands, so nothing said is lost. A tap
+/// then listens hands-free; keeping the finger down is hold-to-talk.
+class MicButton extends StatefulWidget {
   const MicButton({
     super.key,
     required this.listening,
     required this.level,
     required this.color,
-    required this.onTap,
+    required this.onPress,
+    this.onHold,
+    this.onRelease,
     this.size = 92,
   });
 
   final bool listening;
   final ValueListenable<double> level;
   final Color color;
-  final VoidCallback onTap;
+
+  /// The finger lands (or an accessibility tap).
+  final VoidCallback onPress;
+
+  /// The finger has stayed down for [holdAfter]: a hold, not a tap.
+  final VoidCallback? onHold;
+
+  /// The finger lifts, or the touch is cancelled.
+  final VoidCallback? onRelease;
   final double size;
+
+  static const holdAfter = Duration(milliseconds: 350);
+
+  @override
+  State<MicButton> createState() => _MicButtonState();
+}
+
+class _MicButtonState extends State<MicButton> {
+  int? _pointer;
+  Timer? _hold;
+
+  void _down(PointerDownEvent event) {
+    if (_pointer != null) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _pointer = event.pointer);
+    widget.onPress();
+    _hold = Timer(MicButton.holdAfter, () => widget.onHold?.call());
+  }
+
+  void _up(PointerEvent event) {
+    if (event.pointer != _pointer) return;
+    _hold?.cancel();
+    setState(() => _pointer = null);
+    widget.onRelease?.call();
+  }
+
+  @override
+  void dispose() {
+    _hold?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final color = widget.color;
+    final size = widget.size;
+    final listening = widget.listening;
     return Semantics(
       button: true,
       label: listening ? 'Stop listening' : 'Start listening',
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          onTap();
-        },
+      onTap: widget.onPress,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _down,
+        onPointerUp: _up,
+        onPointerCancel: _up,
         child: SizedBox.square(
           dimension: size * 1.7,
           child: ValueListenableBuilder<double>(
-            valueListenable: level,
+            valueListenable: widget.level,
             builder: (context, l, _) => CustomPaint(
               painter: _RipplePainter(level: listening ? l : 0, color: color, inner: size / 2),
               child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: size,
-                  height: size,
-                  padding: const EdgeInsets.all(2.4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: foilFor(color),
-                    boxShadow: [
-                      BoxShadow(color: color.withValues(alpha: listening ? 0.5 : 0.2), blurRadius: listening ? 34 : 16),
-                    ],
-                  ),
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
+                child: AnimatedScale(
+                  scale: _pointer != null ? 0.94 : 1,
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOut,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: size,
+                    height: size,
+                    padding: const EdgeInsets.all(2.4),
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        center: Alignment(-0.3, -0.4),
-                        colors: [Color(0xFF26232C), Color(0xFF0B0A0E)],
-                      ),
+                      gradient: foilFor(color),
+                      boxShadow: [
+                        BoxShadow(color: color.withValues(alpha: listening ? 0.5 : 0.2), blurRadius: listening ? 34 : 16),
+                      ],
                     ),
-                    child: Icon(
-                      listening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                      size: size * 0.42,
-                      color: Color.lerp(color, Colors.white, 0.45),
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: Alignment(-0.3, -0.4),
+                          colors: [Color(0xFF26232C), Color(0xFF0B0A0E)],
+                        ),
+                      ),
+                      child: Icon(
+                        listening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        size: size * 0.42,
+                        color: Color.lerp(color, Colors.white, 0.45),
+                      ),
                     ),
                   ),
                 ),

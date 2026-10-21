@@ -136,7 +136,12 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       : _prompts;
 
   bool? _available;
-  bool _listening = false;
+  bool _listening = false; // a session is open, or opening
+  bool _live = false; // the microphone is actually open
+  bool _holding = false; // hold-to-talk: letting go ends it
+  bool _handsFree = true; // after each one, listen again by itself
+  bool _pressStarted = false; // this press opened the session
+  int _session = 0;
   String _heard = '';
   String? _hint;
   int _index = 0;
@@ -162,6 +167,7 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
   @override
   void dispose() {
     _next?.cancel();
+    _session++; // nothing from the last session reaches a disposed screen
     _speech.stop();
     _burst.dispose();
     _level.dispose();
@@ -169,37 +175,103 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
     super.dispose();
   }
 
-  void _toggleListening() {
+  /// Finger down: listen at once, or stop if already listening.
+  void _micDown() {
+    _pressStarted = false;
+    if (_justDone) return; // the next one is on its way
     if (_listening) {
-      _speech.stop();
-      setState(() => _listening = false);
-      _level.value = 0;
+      _stopListening();
     } else {
-      _listen();
+      _pressStarted = _listen();
     }
   }
 
-  void _listen() {
-    if (_finished || _available != true) return;
+  /// Still pressing: hold to talk, and let go when you're done.
+  void _micHold() {
+    // Pressed during the "affirmed" moment: the next one starts held.
+    if (_justDone) {
+      setState(() => _holding = true);
+      return;
+    }
+    if (!_pressStarted || !_listening) return;
+    _speech.holdOpen();
+    setState(() {
+      _holding = true;
+      _handsFree = false;
+    });
+  }
+
+  /// Finger up: a tap keeps listening hands-free; a hold ends here.
+  void _micUp() {
+    final held = _holding;
+    if (_pressStarted && !held) _handsFree = true;
+    _pressStarted = false;
+    if (!held) return;
+    setState(() => _holding = false);
+    if (_listening) _stopListening();
+  }
+
+  void _stopListening() {
+    setState(() {
+      _listening = false;
+      _live = false;
+    });
+    _level.value = 0;
+    _speech.stop();
+  }
+
+  /// Starts listening; [held] carries a hold-to-talk on into it.
+  bool _listen({bool held = false}) {
+    if (_finished || _available != true) return false;
+    final session = ++_session;
     setState(() {
       _listening = true;
+      _live = false;
       _heard = '';
       _hint = null;
       _justDone = false;
     });
     _speech.listen(
-      onHeard: _onHeard,
-      onLevel: (l) => _level.value = l,
+      onHeard: (h) {
+        if (session == _session) _onHeard(h);
+      },
+      onLevel: (l) {
+        if (session == _session) _level.value = l;
+      },
+      onLive: () {
+        if (mounted && session == _session) setState(() => _live = true);
+      },
       onDone: () {
-        if (!mounted) return;
-        setState(() {
-          _listening = false;
-          // Stopped short of the whole affirmation: say so, don't just reset.
-          if (_affirm && !_justDone && _heard.isNotEmpty) _hint = 'ALMOST — TAP AND SAY IT ONCE MORE';
-        });
-        _level.value = 0;
+        if (mounted && session == _session) _onEnded();
       },
     );
+    if (held) {
+      _pressStarted = true;
+      _speech.holdOpen();
+    }
+    return true;
+  }
+
+  void _onEnded() {
+    // Still marked listening: it ended by itself, not by your tap or release.
+    final byItself = _listening;
+    _level.value = 0;
+    if (!_justDone && !_finished && !_affirm && spokenTokens(_heard).length >= 3) {
+      // The pause is the end of the answer.
+      _complete(spoken: _heard);
+      return;
+    }
+    setState(() {
+      _listening = false;
+      _live = false;
+      if (_justDone || _finished) return;
+      if (_heard.isNotEmpty) {
+        // Stopped short: say so, don't just reset.
+        _hint = _affirm ? 'ALMOST — SAY IT ONCE MORE' : 'SAY A LITTLE MORE…';
+      } else if (byItself) {
+        _hint = "DIDN'T CATCH THAT — TRY AGAIN";
+      }
+    });
   }
 
   Set<int> _matched(String target, String heard) {
@@ -227,12 +299,15 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
   }
 
   void _complete({String? spoken}) {
+    _session++; // whatever this session still says is past
     _speech.stop();
     _level.value = 0;
     HapticFeedback.heavyImpact();
     _burst.forward(from: 0);
     setState(() {
       _listening = false;
+      _live = false;
+      _hint = null;
       _justDone = true;
       if (_affirm) {
         _rep++;
@@ -255,8 +330,9 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       });
       if (_index >= _items.length) {
         _finish();
-      } else if (_available == true) {
-        _listen();
+      } else if (_available == true && (_handsFree || _holding)) {
+        // Still holding: carry on listening for the next one.
+        _listen(held: _holding);
       }
     });
   }
@@ -275,6 +351,7 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       _rep = 0;
       _answers.clear();
       _heard = '';
+      _handsFree = true;
     });
     if (_available == true) _listen();
   }
@@ -285,8 +362,10 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
       return _affirm ? 'SAY IT ALOUD, THEN CONFIRM' : 'SPEAK IT, OR TYPE IT BELOW';
     }
     if (_justDone) return _affirm ? 'AFFIRMED' : 'RECEIVED';
+    if (_listening && !_live) return 'ONE MOMENT…';
+    if (_listening && _holding) return 'LISTENING · LET GO WHEN DONE';
     if (_listening) return 'LISTENING…';
-    return 'TAP THE MICROPHONE AND SPEAK';
+    return 'TAP OR HOLD THE MICROPHONE TO SPEAK';
   }
 
   @override
@@ -342,7 +421,9 @@ class _SpeakSessionScreenState extends ConsumerState<SpeakSessionScreen> with Si
                       listening: _listening,
                       level: _level,
                       color: _color,
-                      onTap: _toggleListening,
+                      onPress: _micDown,
+                      onHold: _micHold,
+                      onRelease: _micUp,
                     ),
                 ],
               ],
