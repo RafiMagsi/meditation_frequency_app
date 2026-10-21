@@ -146,7 +146,7 @@ class _BeginButton extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
                 gradient: const LinearGradient(
-                  colors: [AppTheme.violet, AppTheme.pink],
+                  colors: [Color(0xFF7C6BF0), Color(0xFFC94F93)],
                 ),
                 boxShadow: [
                   BoxShadow(

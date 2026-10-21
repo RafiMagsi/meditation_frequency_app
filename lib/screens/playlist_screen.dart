@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/gloss.dart';
 
 /// Playlists: gentle list with slide-in/out entries.
 class PlaylistScreen extends ConsumerWidget {
@@ -54,12 +55,13 @@ class PlaylistScreen extends ConsumerWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.all(22),
                   width: double.infinity,
+                  foregroundDecoration: glossForeground(28),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF9E4A6D), Color(0xFFE879B8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF8A3A60), Color(0xFFE879B8)],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -127,7 +129,7 @@ class PlaylistScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(30),
                       gradient:
-                          const LinearGradient(colors: [AppTheme.pink, AppTheme.violet]),
+                          const LinearGradient(colors: [Color(0xFFB34A86), Color(0xFF6B54E0)]),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,

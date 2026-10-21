@@ -203,7 +203,7 @@ class _TimerScreenState extends State<TimerScreen>
                             borderRadius: BorderRadius.circular(18),
                             gradient: _minutes == m
                                 ? const LinearGradient(
-                                    colors: [Color(0xFF3D5A9E), Color(0xFF6EA8F6)])
+                                    colors: [Color(0xFF2E4680), Color(0xFF5490E0)])
                                 : null,
                             color: _minutes == m ? null : AppTheme.surface,
                           ),

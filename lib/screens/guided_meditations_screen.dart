@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/meditation.dart';
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/gloss.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
@@ -39,12 +40,13 @@ class GuidedMeditationsScreen extends ConsumerWidget {
                 child: Container(
                   height: 132,
                   padding: const EdgeInsets.all(22),
+                  foregroundDecoration: glossForeground(28),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF2E8C8C), Color(0xFF5EEAD4)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1E6E6E), Color(0xFF5EEAD4)],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -137,10 +139,11 @@ class _SessionCard extends StatelessWidget {
           heroTag: 'med-$index',
           icon: meditation.icon,
         ),
-      ),
-      child: Hero(
+      ),        child: Hero(
         tag: 'med-$index',
-        child: Container(
+        child: GlossOverlay(
+          borderRadius: 26,
+          child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(26),
@@ -205,6 +208,7 @@ class _SessionCard extends StatelessWidget {
             ],
           ),
         ),
+          ),
       ),
     );
   }

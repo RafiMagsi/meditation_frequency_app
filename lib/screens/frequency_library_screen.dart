@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/frequency.dart';
 import '../providers/providers.dart';
+import '../widgets/gloss.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glow_card.dart';
 import '../widgets/seamless_route.dart';
@@ -41,12 +42,13 @@ class FrequencyLibraryScreen extends ConsumerWidget {
                 child: Container(
                   height: 132,
                   padding: const EdgeInsets.all(22),
+                  foregroundDecoration: glossForeground(28),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF6D5AE0), Color(0xFF9C7BF0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF5B48D6), Color(0xFF9C7BF0)],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
                     ),
                     boxShadow: [
                       BoxShadow(

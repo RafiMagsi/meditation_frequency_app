@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/gloss.dart';
 import '../widgets/seamless_route.dart';
 import 'player_screen.dart';
 
@@ -65,12 +66,13 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                 child: Container(
                   height: 120,
                   padding: const EdgeInsets.all(22),
+                  foregroundDecoration: glossForeground(28),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFB85E8B), Color(0xFFF0A0C8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFA63F76), Color(0xFFF0A0C8)],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -179,7 +181,8 @@ class _MoodChip extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: selected
-              ? const LinearGradient(colors: [AppTheme.pink, AppTheme.violet])
+              ? const LinearGradient(
+                  colors: [Color(0xFFA63A78), Color(0xFF5B48D6)])
               : null,
           color: selected ? null : AppTheme.surface,
           border: Border.all(
@@ -224,7 +227,9 @@ class _SuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlossOverlay(
+      borderRadius: 26,
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -242,7 +247,7 @@ class _SuggestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('FOR YOU', style: mutedStyle.copyWith(fontSize: 10.5, letterSpacing: 2.5)),
+          Text('${mood.emoji}  FOR YOU', style: mutedStyle.copyWith(fontSize: 10.5, letterSpacing: 2.5)),
           const SizedBox(height: 8),
           Text(
             mood.tip,
@@ -261,7 +266,8 @@ class _SuggestionCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(colors: [AppTheme.violet, AppTheme.pink]),
+                gradient: const LinearGradient(
+                    colors: [Color(0xFF6B54E0), Color(0xFFB34A86)]),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -282,6 +288,7 @@ class _SuggestionCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

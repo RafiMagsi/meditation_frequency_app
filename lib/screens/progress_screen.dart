@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/gloss.dart';
 
 /// Progress: animated weekly chart, stats and an insight card.
 class ProgressScreen extends StatefulWidget {
@@ -72,12 +73,13 @@ class _ProgressScreenState extends State<ProgressScreen>
                 child: Container(
                   height: 120,
                   padding: const EdgeInsets.all(22),
+                  foregroundDecoration: glossForeground(28),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF8A6D1F), Color(0xFFF6C77A)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF7A5F1A), Color(0xFFF6C77A)],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
                     ),
                     boxShadow: [
                       BoxShadow(
